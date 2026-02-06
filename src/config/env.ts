@@ -12,13 +12,24 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRE: z.string().default("7d"),
 
+  // Redis
+  REDIS_URL: z.url().optional(),
+  REDIS_HOST: z.string().default("localhost"),
+  REDIS_PORT: z.string().transform(Number).default(6379),
+  REDIS_PASSWORD: z.string().optional(),
+
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: z.string().min(1),
+  CLOUDINARY_API_KEY: z.string().min(1),
+  CLOUDINARY_API_SECRET: z.string().min(1),
+
   // Google OAuth
   GOOGLE_CLIENT_ID: z.string().min(1),
   GOOGLE_CLIENT_SECRET: z.string().min(1),
   GOOGLE_CALLBACK_URL: z.string().url(),
 
   // Frontend URL for OAuth redirects
-  CLIENT_URL: z.string().url().default("http://localhost:3000"),
+  CLIENT_URL: z.url().default("http://localhost:3000"),
 
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().transform(Number).optional(),
