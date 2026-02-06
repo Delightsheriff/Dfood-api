@@ -3,6 +3,7 @@ import { AuthService } from "../services/authService";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
   signupSchema,
+  vendorSignupSchema,
   signinSchema,
   forgotPasswordSchema,
   verifyOTPSchema,
@@ -18,14 +19,35 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(201).json({
     success: true,
-    data: {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-      token,
-    },
+    data: { user, token },
+  });
+});
+
+export const vendorSignup = asyncHandler(
+  async (req: Request, res: Response) => {
+    const data = vendorSignupSchema.parse(req.body);
+    const { user, token } = await authService.vendorSignup(data);
+
+    res.status(201).json({
+      success: true,
+      data: { user, token },
+      message: "Vendor account created. Your application is pending review.",
+    });
+  },
+);
+
+export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.user) {
+    throw new UnauthorizedError("Authentication required");
+  }
+
+  const data = signupSchema.parse(req.body);
+  const { user } = await authService.createAdmin(data, req.user._id.toString());
+
+  res.status(201).json({
+    success: true,
+    data: { user },
+    message: "Admin account created successfully",
   });
 });
 
@@ -35,14 +57,7 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json({
     success: true,
-    data: {
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-      token,
-    },
+    data: { user, token },
   });
 });
 
@@ -91,7 +106,7 @@ export const resetPassword = asyncHandler(
 );
 
 export const getSession = asyncHandler(async (req: Request, res: Response) => {
-  const user = (req as any).user;
+  const user = req.user!;
 
   res.status(200).json({
     success: true,
@@ -100,6 +115,11 @@ export const getSession = asyncHandler(async (req: Request, res: Response) => {
         id: user._id,
         name: user.name,
         email: user.email,
+        role: user.role,
+        ...(user.role === "vendor" && {
+          vendorStatus: user.vendorStatus,
+          businessName: user.businessName,
+        }),
       },
     },
   });
