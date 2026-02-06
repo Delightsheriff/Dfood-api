@@ -68,6 +68,19 @@ export class AuthService {
     return { user: this.sanitizeUser(user), token };
   }
 
+  async googleAuth(user: IUser): Promise<{ user: any; token: string }> {
+    // Ensure Google users are always customers
+    if (user.role !== UserRole.CUSTOMER) {
+      throw new ForbiddenError(
+        "Google OAuth is only available for customer accounts",
+      );
+    }
+
+    const token = this.generateToken(user._id.toString());
+
+    return { user: this.sanitizeUser(user), token };
+  }
+
   async signin(data: SigninInput): Promise<{ user: any; token: string }> {
     const user = await User.findOne({ email: data.email }).select("+password");
 

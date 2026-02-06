@@ -10,6 +10,7 @@ import {
   resetPasswordSchema,
 } from "../types/auth";
 import { UnauthorizedError } from "../types/errors";
+import { env } from "../config/env";
 
 const authService = new AuthService();
 
@@ -60,6 +61,23 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
     data: { user, token },
   });
 });
+
+export const googleCallback = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedError("Google authentication failed");
+    }
+
+    const { token } = await authService.googleAuth(req.user as any);
+
+    // Redirect to mobile app with token
+    // For mobile: use custom URL scheme (e.g., foodapp://auth?token=...)
+    // For web: redirect to frontend with token in query/hash
+    const redirectUrl = `${env.CLIENT_URL}/auth/callback?token=${token}`;
+
+    res.redirect(redirectUrl);
+  },
+);
 
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response) => {
