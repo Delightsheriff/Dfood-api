@@ -3,13 +3,20 @@ import crypto from "crypto";
 import bcrypt from "bcrypt";
 import User, { IUser } from "../models/User";
 import { env } from "../config/env";
-import { ConflictError, UnauthorizedError } from "../types/errors";
+import {
+  ConflictError,
+  ForbiddenError,
+  UnauthorizedError,
+} from "../types/errors";
 import {
   SignupInput,
   SigninInput,
   ForgotPasswordInput,
   VerifyOTPInput,
   ResetPasswordInput,
+  UserRole,
+  VendorStatus,
+  VendorSignupInput,
 } from "../types/auth";
 
 export class AuthService {
@@ -32,19 +39,36 @@ export class AuthService {
     return crypto.randomInt(1000, 9999).toString();
   }
 
-  async signup(data: SignupInput): Promise<{ user: IUser; token: string }> {
+  private sanitizeUser(user: IUser) {
+    return {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      ...(user.role === UserRole.VENDOR && {
+        vendorStatus: user.vendorStatus,
+        businessName: user.businessName,
+      }),
+    };
+  }
+
+  async signup(data: SignupInput): Promise<{ user: any; token: string }> {
     const existingUser = await User.findOne({ email: data.email });
     if (existingUser) {
       throw new ConflictError("Email already registered");
     }
 
-    const user = await User.create(data);
+    const user = await User.create({
+      ...data,
+      role: UserRole.CUSTOMER,
+    });
+
     const token = this.generateToken(user._id.toString());
 
-    return { user, token };
+    return { user: this.sanitizeUser(user), token };
   }
 
-  async signin(data: SigninInput): Promise<{ user: IUser; token: string }> {
+  async signin(data: SigninInput): Promise<{ user: any; token: string }> {
     const user = await User.findOne({ email: data.email }).select("+password");
 
     if (!user || !user.password) {
@@ -56,9 +80,24 @@ export class AuthService {
       throw new UnauthorizedError("Invalid credentials");
     }
 
+    // Check vendor status
+    if (
+      user.role === UserRole.VENDOR &&
+      user.vendorStatus === VendorStatus.SUSPENDED
+    ) {
+      throw new ForbiddenError("Your vendor account has been suspended");
+    }
+
+    if (
+      user.role === UserRole.VENDOR &&
+      user.vendorStatus === VendorStatus.REJECTED
+    ) {
+      throw new ForbiddenError("Your vendor application was rejected");
+    }
+
     const token = this.generateToken(user._id.toString());
 
-    return { user, token };
+    return { user: this.sanitizeUser(user), token };
   }
 
   async forgotPassword(data: ForgotPasswordInput): Promise<void> {
@@ -95,7 +134,6 @@ export class AuthService {
       throw new UnauthorizedError("Invalid or expired OTP");
     }
 
-    // Generate short-lived reset token (proof of OTP verification)
     const resetToken = this.generateResetToken(user._id.toString());
 
     return { resetToken };
@@ -147,5 +185,55 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedError("Invalid or expired reset token");
     }
+  }
+
+  async createAdmin(
+    data: SignupInput,
+    creatorId: string,
+  ): Promise<{ user: any }> {
+    // Verify creator is admin
+    const creator = await User.findById(creatorId);
+    if (!creator || creator.role !== UserRole.ADMIN) {
+      throw new ForbiddenError("Only admins can create admin accounts");
+    }
+
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new ConflictError("Email already registered");
+    }
+
+    const user = await User.create({
+      ...data,
+      role: UserRole.ADMIN,
+    });
+
+    return { user: this.sanitizeUser(user) };
+  }
+
+  async vendorSignup(
+    data: VendorSignupInput,
+  ): Promise<{ user: any; token: string }> {
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new ConflictError("Email already registered");
+    }
+
+    const user = await User.create({
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      role: UserRole.VENDOR,
+      vendorStatus: VendorStatus.PENDING,
+      businessName: data.businessName,
+      businessAddress: data.businessAddress,
+      businessPhone: data.businessPhone,
+    });
+
+    const token = this.generateToken(user._id.toString());
+
+    // TODO: Send verification email
+    // TODO: Notify admins of new vendor application
+
+    return { user: this.sanitizeUser(user), token };
   }
 }
