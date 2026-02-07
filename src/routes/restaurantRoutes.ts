@@ -2,14 +2,15 @@ import { Router } from "express";
 import {
   createRestaurant,
   getRestaurantById,
-  getMyRestaurants,
+  getMyRestaurant,
   getAllRestaurants,
   updateRestaurant,
   deleteRestaurantImage,
   deleteRestaurant,
 } from "../controllers/restaurantController";
-import { protect, requireActiveVendor } from "../middleware/auth";
+import { protect, restrictTo } from "../middleware/auth";
 import { uploadMultiple } from "../middleware/upload";
+import { UserRole } from "../types/auth";
 
 const router = Router();
 
@@ -17,21 +18,21 @@ const router = Router();
 router.get("/", getAllRestaurants);
 router.get("/:id", getRestaurantById);
 
-// Vendor routes (protected)
-router.post(
-  "/",
-  protect,
-  requireActiveVendor,
-  uploadMultiple,
-  createRestaurant,
-);
+// Protected routes - any authenticated user can create (becomes vendor)
+router.post("/", protect, uploadMultiple, createRestaurant);
 
-router.get("/my/restaurants", protect, requireActiveVendor, getMyRestaurants);
+// Vendor-only routes
+router.get(
+  "/my/restaurant",
+  protect,
+  restrictTo(UserRole.VENDOR),
+  getMyRestaurant,
+);
 
 router.patch(
   "/:id",
   protect,
-  requireActiveVendor,
+  restrictTo(UserRole.VENDOR),
   uploadMultiple,
   updateRestaurant,
 );
@@ -39,10 +40,10 @@ router.patch(
 router.delete(
   "/:id/images",
   protect,
-  requireActiveVendor,
+  restrictTo(UserRole.VENDOR),
   deleteRestaurantImage,
 );
 
-router.delete("/:id", protect, requireActiveVendor, deleteRestaurant);
+router.delete("/:id", protect, restrictTo(UserRole.VENDOR), deleteRestaurant);
 
 export default router;

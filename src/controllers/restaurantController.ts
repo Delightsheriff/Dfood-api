@@ -27,6 +27,7 @@ export const createRestaurant = asyncHandler(
     res.status(201).json({
       success: true,
       data: { restaurant },
+      message: "Restaurant created successfully. You are now a vendor!",
     });
   },
 );
@@ -42,15 +43,15 @@ export const getRestaurantById = asyncHandler(
   },
 );
 
-export const getMyRestaurants = asyncHandler(
+export const getMyRestaurant = asyncHandler(
   async (req: Request, res: Response) => {
-    const restaurants = await restaurantService.getByOwnerId(
+    const restaurant = await restaurantService.getByOwnerId(
       req.user!._id.toString(),
     );
 
     res.status(200).json({
       success: true,
-      data: { restaurants },
+      data: { restaurant },
     });
   },
 );

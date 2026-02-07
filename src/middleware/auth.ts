@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { AuthService } from "../services/authService";
 import { UnauthorizedError, ForbiddenError } from "../types/errors";
 import { asyncHandler } from "../utils/asyncHandler";
-import { UserRole, VendorStatus } from "../types/auth";
+import { UserRole } from "../types/auth";
 import { IUser } from "../models/User";
 
 const authService = new AuthService();
@@ -46,32 +46,4 @@ export const restrictTo = (...roles: UserRole[]) => {
 
     next();
   };
-};
-
-export const requireActiveVendor = (
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-) => {
-  if (!req.user) {
-    throw new UnauthorizedError("Authentication required");
-  }
-
-  if (req.user.role !== UserRole.VENDOR) {
-    throw new ForbiddenError("Vendor access required");
-  }
-
-  if (req.user.vendorStatus !== VendorStatus.ACTIVE) {
-    const statusMessages = {
-      [VendorStatus.PENDING]: "Your vendor account is pending approval",
-      [VendorStatus.SUSPENDED]: "Your vendor account has been suspended",
-      [VendorStatus.REJECTED]: "Your vendor application was rejected",
-    };
-
-    throw new ForbiddenError(
-      statusMessages[req.user.vendorStatus!] || "Vendor account not active",
-    );
-  }
-
-  next();
 };

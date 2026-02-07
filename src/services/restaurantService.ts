@@ -13,34 +13,28 @@ import {
   ConflictError,
   ValidationError,
 } from "../types/errors";
-import { VendorStatus } from "../types/auth";
+import { UserRole } from "../types/auth";
+import { Document } from "mongoose";
 
 export class RestaurantService {
   async create(
-    ownerId: string,
+    userId: string,
     data: CreateRestaurantInput,
     imageBuffers: Buffer[],
   ): Promise<IRestaurant> {
-    // Verify owner is active vendor
-    const owner = await User.findById(ownerId);
-    if (!owner || owner.role !== "vendor") {
-      throw new ForbiddenError("Only vendors can create restaurants");
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new NotFoundError("User not found");
     }
 
-    if (owner.vendorStatus !== VendorStatus.ACTIVE) {
-      throw new ForbiddenError(
-        "Your vendor account must be active to create a restaurant",
-      );
-    }
-
-    // Check if vendor already has a restaurant with same name
-    const existing = await Restaurant.findOne({
-      ownerId,
-      name: { $regex: new RegExp(`^${data.name}$`, "i") },
-    });
-
-    if (existing) {
-      throw new ConflictError("You already have a restaurant with this name");
+    // Check if user already has a restaurant (V1: one restaurant per vendor)
+    if (user.role === UserRole.VENDOR) {
+      const existingRestaurant = await Restaurant.findOne({ ownerId: userId });
+      if (existingRestaurant) {
+        throw new ConflictError(
+          "You already have a restaurant. Multiple restaurants not supported in V1.",
+        );
+      }
     }
 
     // Require at least one image
@@ -57,9 +51,15 @@ export class RestaurantService {
     // Create restaurant
     const restaurant = await Restaurant.create({
       ...data,
-      ownerId,
+      ownerId: userId,
       images: imageUrls,
     });
+
+    // Auto-upgrade user to vendor if they're currently a customer
+    if (user.role === UserRole.CUSTOMER) {
+      user.role = UserRole.VENDOR;
+      await user.save();
+    }
 
     // Invalidate cache
     await cacheService.deletePattern("restaurants:*");
@@ -74,7 +74,6 @@ export class RestaurantService {
         const rest = await Restaurant.findById(id).lean();
         if (!rest) return null;
 
-        // Manually add status since lean() doesn't include virtuals
         const instance = new Restaurant(rest);
         return {
           ...rest,
@@ -91,16 +90,14 @@ export class RestaurantService {
     return restaurant as unknown as IRestaurant;
   }
 
-  async getByOwnerId(ownerId: string): Promise<IRestaurant[]> {
-    const restaurants = await Restaurant.find({ ownerId }).sort({
-      createdAt: -1,
-    });
-    return restaurants;
+  async getByOwnerId(ownerId: string): Promise<IRestaurant | null> {
+    const restaurant = await Restaurant.findOne({ ownerId });
+    return restaurant;
   }
 
   async getAll(filters?: {
     isOpen?: boolean;
-  }): Promise<Array<IRestaurant & { status: string }>> {
+  }): Promise<Array<Omit<IRestaurant, keyof Document> & { status: string }>> {
     const cacheKey = filters?.isOpen
       ? CACHE_KEYS.RESTAURANTS_OPEN
       : "restaurants:all";
@@ -110,16 +107,15 @@ export class RestaurantService {
       async () => {
         const restaurants = await Restaurant.find()
           .sort({ rating: -1, name: 1 })
-          .lean<IRestaurant[]>(); // Type hint for lean result
+          .lean();
 
-        // Add status to each restaurant
         return restaurants
           .map((rest) => {
             const instance = new Restaurant(rest);
             return {
               ...rest,
               status: instance.isOpen() ? "Open" : "Closed",
-            } as IRestaurant & { status: string };
+            };
           })
           .filter((rest) => {
             if (filters?.isOpen) {
@@ -144,25 +140,10 @@ export class RestaurantService {
       throw new NotFoundError("Restaurant not found");
     }
 
-    // Verify ownership
     if (restaurant.ownerId.toString() !== ownerId) {
-      throw new ForbiddenError("You can only update your own restaurants");
+      throw new ForbiddenError("You can only update your own restaurant");
     }
 
-    // Check name conflict if updating name
-    if (data.name && data.name !== restaurant.name) {
-      const existing = await Restaurant.findOne({
-        ownerId,
-        name: { $regex: new RegExp(`^${data.name}$`, "i") },
-        _id: { $ne: id },
-      });
-
-      if (existing) {
-        throw new ConflictError("You already have a restaurant with this name");
-      }
-    }
-
-    // Upload new images if provided
     if (imageBuffers && imageBuffers.length > 0) {
       const newImageUrls = await cloudinaryService.uploadImages(
         imageBuffers,
@@ -170,7 +151,6 @@ export class RestaurantService {
       );
       restaurant.images = [...restaurant.images, ...newImageUrls];
 
-      // Limit to 5 images max
       if (restaurant.images.length > 5) {
         const toDelete = restaurant.images.slice(
           0,
@@ -178,7 +158,6 @@ export class RestaurantService {
         );
         restaurant.images = restaurant.images.slice(-5);
 
-        // Delete old images (non-blocking)
         cloudinaryService
           .deleteImages(toDelete)
           .catch((err) =>
@@ -187,7 +166,6 @@ export class RestaurantService {
       }
     }
 
-    // Update fields
     if (data.name) restaurant.name = data.name;
     if (data.description !== undefined)
       restaurant.description = data.description;
@@ -199,7 +177,6 @@ export class RestaurantService {
 
     await restaurant.save();
 
-    // Invalidate cache
     await cacheService.deletePattern("restaurants:*");
     await cacheService.delete(CACHE_KEYS.RESTAURANT_BY_ID(id));
 
@@ -218,7 +195,7 @@ export class RestaurantService {
     }
 
     if (restaurant.ownerId.toString() !== ownerId) {
-      throw new ForbiddenError("You can only update your own restaurants");
+      throw new ForbiddenError("You can only update your own restaurant");
     }
 
     if (restaurant.images.length <= 1) {
@@ -229,16 +206,13 @@ export class RestaurantService {
       throw new NotFoundError("Image not found in restaurant");
     }
 
-    // Remove image from array
     restaurant.images = restaurant.images.filter((img) => img !== imageUrl);
     await restaurant.save();
 
-    // Delete from Cloudinary (non-blocking)
     cloudinaryService
       .deleteImage(imageUrl)
       .catch((err) => console.error("Failed to delete restaurant image:", err));
 
-    // Invalidate cache
     await cacheService.delete(CACHE_KEYS.RESTAURANT_BY_ID(id));
 
     return restaurant;
@@ -252,23 +226,17 @@ export class RestaurantService {
     }
 
     if (restaurant.ownerId.toString() !== ownerId) {
-      throw new ForbiddenError("You can only delete your own restaurants");
+      throw new ForbiddenError("You can only delete your own restaurant");
     }
 
     // TODO: Check if restaurant has food items or active orders
-    // const hasItems = await FoodItem.exists({ restaurantId: id });
-    // if (hasItems) {
-    //   throw new ValidationError('Cannot delete restaurant with existing menu items');
-    // }
 
-    // Delete all images
     if (restaurant.images.length > 0) {
       await cloudinaryService.deleteImages(restaurant.images);
     }
 
     await restaurant.deleteOne();
 
-    // Invalidate cache
     await cacheService.deletePattern("restaurants:*");
     await cacheService.delete(CACHE_KEYS.RESTAURANT_BY_ID(id));
   }
