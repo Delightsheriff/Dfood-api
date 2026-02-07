@@ -1,0 +1,581 @@
+{
+  "info": {
+    "_postman_id": "a9995b16-5406-46df-99c6-fd3c13a44d24",
+    "name": "Food API",
+    "description": "API collection for the Food API application. This Express.js API includes authentication (signup, signin, OAuth), password management, and category management endpoints.\n\n## Authentication\nMost protected endpoints require a Bearer token in the Authorization header:\n```\nAuthorization: Bearer {{token}}\n```\n\n## Base URL\n```\n{{baseUrl}}\n```",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "id": "3aad6beb-0382-43cc-86d8-21a5c1c1424b",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Check API health status. Returns current timestamp and status."
+          },
+          "response": []
+        }
+      ],
+      "id": "d1ea24b3-0dde-4977-88ed-ff1c9ab0422c"
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Sign Up (Customer)",
+              "id": "1e2bf53d-e8bf-4420-8be2-7e8215a384c5",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/signup",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "signup"
+                  ]
+                },
+                "description": "Register a new customer account. Rate limited.\n\n**Validation:**\n- name: 2-50 characters\n- email: valid email format\n- password: 8-128 characters"
+              },
+              "response": []
+            },
+            {
+              "name": "Sign Up (Vendor)",
+              "id": "8e00ecba-508e-48c5-b8fe-f012a591ba11",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"Jane Vendor\",\n  \"email\": \"vendor@example.com\",\n  \"password\": \"password123\",\n  \"businessName\": \"Jane's Kitchen\",\n  \"businessAddress\": \"123 Main Street, City, State 12345\",\n  \"businessPhone\": \"1234567890\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/vendor/signup",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "vendor",
+                    "signup"
+                  ]
+                },
+                "description": "Register a new vendor account. Vendor accounts require approval before becoming active. Rate limited.\n\n**Validation:**\n- name: 2-50 characters\n- email: valid email format\n- password: 8-128 characters\n- businessName: 2-100 characters\n- businessAddress: 10-200 characters\n- businessPhone: 10-20 characters"
+              },
+              "response": []
+            },
+            {
+              "name": "Sign In",
+              "id": "11abdd45-bf30-47ba-b1f3-bbaeb02af5b5",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "// ADMIN DETAILS\n{\n\n  \"email\": \"admin@foodapp.com\",\n  \"password\": \"Admin123!@#\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/signin",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "signin"
+                  ]
+                },
+                "description": "Authenticate user and receive JWT token. Rate limited.\n\n**Validation:**\n- email: valid email format\n- password: required"
+              },
+              "response": []
+            },
+            {
+              "name": "Forgot Password",
+              "id": "5872db8b-d16d-4001-bfd1-ad5c8fdadc4c",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"john@example.com\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/forgot-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "forgot-password"
+                  ]
+                },
+                "description": "Request password reset OTP. Sends OTP to email if account exists. Rate limited with stricter limits.\n\n**Validation:**\n- email: valid email format"
+              },
+              "response": []
+            },
+            {
+              "name": "Verify OTP",
+              "id": "9eb2cc96-b4f0-46be-9b9e-16bb66d1dddd",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"john@example.com\",\n  \"otp\": \"1234\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/verify-otp",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "verify-otp"
+                  ]
+                },
+                "description": "Verify OTP for password reset. Returns a reset token on success. Rate limited.\n\n**Validation:**\n- email: valid email format\n- otp: exactly 4 characters"
+              },
+              "response": []
+            },
+            {
+              "name": "Reset Password",
+              "id": "aed9c537-b582-4001-841e-9a294240753f",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{resetToken}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"newPassword\": \"newpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/reset-password",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "reset-password"
+                  ]
+                },
+                "description": "Reset password using reset token from OTP verification. Rate limited.\n\n**Authorization:** Requires reset token (from verify-otp) in Bearer header.\n\n**Validation:**\n- newPassword: 8-128 characters"
+              },
+              "response": []
+            }
+          ],
+          "id": "2ac1aa65-dc61-4376-b24a-72bafc070385"
+        },
+        {
+          "name": "Google OAuth",
+          "item": [
+            {
+              "name": "Google Auth Redirect",
+              "id": "d613ef22-38d6-4cb1-9d2a-625ef6583a56",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/google",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "google"
+                  ]
+                },
+                "description": "Initiate Google OAuth flow. Redirects to Google for authentication. Requests profile and email scopes."
+              },
+              "response": []
+            },
+            {
+              "name": "Google Auth Callback",
+              "id": "43c579b1-3303-402e-83c7-36c2f295bca5",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/google/callback",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "google",
+                    "callback"
+                  ]
+                },
+                "description": "Google OAuth callback endpoint. Handles the response from Google and redirects to client with token."
+              },
+              "response": []
+            },
+            {
+              "name": "Google Auth Failure",
+              "id": "10e2ab8d-31ff-4843-8c67-f629ee96ab81",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/google/failure",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "google",
+                    "failure"
+                  ]
+                },
+                "description": "Google OAuth failure endpoint. Returns error when Google authentication fails."
+              },
+              "response": []
+            }
+          ],
+          "id": "020fd8b7-ccbb-4f2e-b147-9d4dfae887fc"
+        },
+        {
+          "name": "Protected",
+          "item": [
+            {
+              "name": "Get Session",
+              "id": "156466e7-aa65-427b-8903-f8e026c03569",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/session",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "session"
+                  ]
+                },
+                "description": "Get current user session information. Returns user details including role and vendor status if applicable.\n\n**Authorization:** Requires valid JWT token."
+              },
+              "response": []
+            },
+            {
+              "name": "Create Admin",
+              "id": "da3228b3-1794-439b-ae82-df1feb92cbbb",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"New Admin\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"adminpassword123\"\n}"
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/auth/admin/create",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "auth",
+                    "admin",
+                    "create"
+                  ]
+                },
+                "description": "Create a new admin account. Only accessible by existing admins.\n\n**Authorization:** Requires valid JWT token with ADMIN role.\n\n**Validation:**\n- name: 2-50 characters\n- email: valid email format\n- password: 8-128 characters"
+              },
+              "response": []
+            }
+          ],
+          "id": "b0fe6a4c-0c55-4bc1-8f25-78f0c682baa0"
+        }
+      ],
+      "id": "130ca57b-c208-48ba-aab5-a68dfa8fc293"
+    },
+    {
+      "name": "Categories",
+      "item": [
+        {
+          "name": "Public",
+          "item": [
+            {
+              "name": "Get All Categories",
+              "id": "3135dc40-413c-4359-a0c8-fb602e74863c",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "categories"
+                  ]
+                },
+                "description": "Retrieve all categories. Public endpoint, no authentication required."
+              },
+              "response": []
+            },
+            {
+              "name": "Get Category by ID",
+              "id": "d31ee42b-2bef-4264-bc92-d9e2df7b89da",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "categories",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id"
+                    }
+                  ]
+                },
+                "description": "Retrieve a specific category by ID. Public endpoint, no authentication required."
+              },
+              "response": []
+            }
+          ],
+          "id": "c2616c20-1e74-4d48-b0f7-25fc57b2f109"
+        },
+        {
+          "name": "Admin Only",
+          "item": [
+            {
+              "name": "Create Category",
+              "id": "cbf14852-b6b4-4b41-87eb-a484795a38d8",
+              "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTg3MjlhNmEwMmM0ZTJkMTQzYjUzZTgiLCJpYXQiOjE3NzA0NjU5NTAsImV4cCI6MTc3MTA3MDc1MH0.S7yln5FgLgizCutkK-DnPKWoEWqK5YlNs7M72GkLjjs",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Desserts & Snacks",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "type": "file",
+                      "src": "/C:/Users/delig/Downloads/Gemini_Generated_Image_9vg6rt9vg6rt9vg6.png"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "categories"
+                  ]
+                },
+                "description": "Create a new category with image. Admin only.\n\n**Authorization:** Requires valid JWT token with ADMIN role.\n\n**Body:** multipart/form-data\n- name (required): 2-50 characters\n- image (required): Category image file"
+              },
+              "response": []
+            },
+            {
+              "name": "Update Category",
+              "id": "c4105799-d2fa-4cd4-94ef-d0a172b5e61d",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "name",
+                      "value": "Updated Category Name",
+                      "type": "text"
+                    },
+                    {
+                      "key": "image",
+                      "value": "",
+                      "type": "file"
+                    }
+                  ]
+                },
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "categories",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id"
+                    }
+                  ]
+                },
+                "description": "Update an existing category. Admin only.\n\n**Authorization:** Requires valid JWT token with ADMIN role.\n\n**Body:** multipart/form-data\n- name (optional): 2-50 characters\n- image (optional): New category image file"
+              },
+              "response": []
+            },
+            {
+              "name": "Delete Category",
+              "id": "ab37fd00-a990-4dcc-9a7a-17f5a518e823",
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/categories/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "categories",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id"
+                    }
+                  ]
+                },
+                "description": "Delete a category by ID. Admin only.\n\n**Authorization:** Requires valid JWT token with ADMIN role."
+              },
+              "response": []
+            }
+          ],
+          "id": "e198d682-90f5-41fc-b572-9df46a59ee95"
+        }
+      ],
+      "id": "c6c18b63-0c35-4db2-88b9-c0f7c5fc905d"
+    }
+  ],
+  "variable": [
+    {
+      "id": "7284dfb3-2a17-49dd-ba3b-82fa47f403b2",
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "id": "1e7a12e8-d158-4708-8ce9-4cc834071500",
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "id": "9e7b9c1b-8a81-4af4-9be8-eccb27381aa4",
+      "key": "resetToken",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

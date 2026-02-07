@@ -2,6 +2,7 @@ import express, { Application, Request, Response } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import authRoutes from "./routes/authRoutes";
+import categoryRoutes from "./routes/categoryRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
 
@@ -20,6 +21,7 @@ app.get("/health", (_req: Request, res: Response) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/categories", categoryRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
