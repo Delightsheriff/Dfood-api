@@ -1,25 +1,23 @@
 import { Router } from "express";
+import passport from "../config/passport";
 import {
   signup,
-  vendorSignup,
   createAdmin,
   signin,
+  googleCallback,
   forgotPassword,
   verifyOTP,
   resetPassword,
   getSession,
-  googleCallback,
 } from "../controllers/authController";
 import { protect, restrictTo } from "../middleware/auth";
 import { authLimiter, forgotPasswordLimiter } from "../middleware/rateLimiter";
 import { UserRole } from "../types/auth";
-import passport from "../config/passport";
 
 const router = Router();
 
 // Public routes
 router.post("/signup", authLimiter, signup);
-router.post("/vendor/signup", authLimiter, vendorSignup);
 router.post("/signin", authLimiter, signin);
 router.post("/forgot-password", forgotPasswordLimiter, forgotPassword);
 router.post("/verify-otp", authLimiter, verifyOTP);

@@ -15,6 +15,7 @@ import {
   VerifyOTPInput,
   ResetPasswordInput,
   UserRole,
+  SanitizedUser,
 } from "../types/auth";
 
 export class AuthService {
@@ -36,16 +37,18 @@ export class AuthService {
     return crypto.randomInt(1000, 9999).toString();
   }
 
-  private sanitizeUser(user: IUser) {
+  private sanitizeUser(user: IUser): SanitizedUser {
     return {
-      id: user._id,
+      id: user._id.toString(), // Convert ObjectId to string
       name: user.name,
       email: user.email,
       role: user.role,
     };
   }
 
-  async signup(data: SignupInput): Promise<{ user: any; token: string }> {
+  async signup(
+    data: SignupInput,
+  ): Promise<{ user: SanitizedUser; token: string }> {
     const existingUser = await User.findOne({ email: data.email });
     if (existingUser) {
       throw new ConflictError("Email already registered");
@@ -64,7 +67,7 @@ export class AuthService {
   async createAdmin(
     data: SignupInput,
     creatorId: string,
-  ): Promise<{ user: any }> {
+  ): Promise<{ user: SanitizedUser }> {
     const creator = await User.findById(creatorId);
     if (!creator || creator.role !== UserRole.ADMIN) {
       throw new ForbiddenError("Only admins can create admin accounts");
@@ -83,7 +86,9 @@ export class AuthService {
     return { user: this.sanitizeUser(user) };
   }
 
-  async googleAuth(user: IUser): Promise<{ user: any; token: string }> {
+  async googleAuth(
+    user: IUser,
+  ): Promise<{ user: SanitizedUser; token: string }> {
     if (user.role !== UserRole.CUSTOMER) {
       throw new ForbiddenError(
         "Google OAuth is only available for customer accounts",
@@ -95,7 +100,9 @@ export class AuthService {
     return { user: this.sanitizeUser(user), token };
   }
 
-  async signin(data: SigninInput): Promise<{ user: any; token: string }> {
+  async signin(
+    data: SigninInput,
+  ): Promise<{ user: SanitizedUser; token: string }> {
     const user = await User.findOne({ email: data.email }).select("+password");
 
     if (!user || !user.password) {

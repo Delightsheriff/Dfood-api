@@ -3,7 +3,6 @@ import { AuthService } from "../services/authService";
 import { asyncHandler } from "../utils/asyncHandler";
 import {
   signupSchema,
-  vendorSignupSchema,
   signinSchema,
   forgotPasswordSchema,
   verifyOTPSchema,
@@ -24,21 +23,8 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
-export const vendorSignup = asyncHandler(
-  async (req: Request, res: Response) => {
-    const data = vendorSignupSchema.parse(req.body);
-    const { user, token } = await authService.vendorSignup(data);
-
-    res.status(201).json({
-      success: true,
-      data: { user, token },
-      message: "Vendor account created. Your application is pending review.",
-    });
-  },
-);
-
 export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
+  if (!req.user?._id) {
     throw new UnauthorizedError("Authentication required");
   }
 
@@ -52,6 +38,20 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const googleCallback = asyncHandler(
+  async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedError("Google authentication failed");
+    }
+
+    const { token } = await authService.googleAuth(req.user as any);
+
+    const redirectUrl = `${env.CLIENT_URL}/auth/callback?token=${token}`;
+
+    res.redirect(redirectUrl);
+  },
+);
+
 export const signin = asyncHandler(async (req: Request, res: Response) => {
   const data = signinSchema.parse(req.body);
   const { user, token } = await authService.signin(data);
@@ -61,23 +61,6 @@ export const signin = asyncHandler(async (req: Request, res: Response) => {
     data: { user, token },
   });
 });
-
-export const googleCallback = asyncHandler(
-  async (req: Request, res: Response) => {
-    if (!req.user) {
-      throw new UnauthorizedError("Google authentication failed");
-    }
-
-    const { token } = await authService.googleAuth(req.user as any);
-
-    // Redirect to mobile app with token
-    // For mobile: use custom URL scheme (e.g., foodapp://auth?token=...)
-    // For web: redirect to frontend with token in query/hash
-    const redirectUrl = `${env.CLIENT_URL}/auth/callback?token=${token}`;
-
-    res.redirect(redirectUrl);
-  },
-);
 
 export const forgotPassword = asyncHandler(
   async (req: Request, res: Response) => {
@@ -124,20 +107,18 @@ export const resetPassword = asyncHandler(
 );
 
 export const getSession = asyncHandler(async (req: Request, res: Response) => {
-  const user = req.user!;
+  if (!req.user) {
+    throw new UnauthorizedError("Authentication required");
+  }
 
   res.status(200).json({
     success: true,
     data: {
       user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        ...(user.role === "vendor" && {
-          vendorStatus: user.vendorStatus,
-          businessName: user.businessName,
-        }),
+        id: req.user._id.toString(),
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
       },
     },
   });
