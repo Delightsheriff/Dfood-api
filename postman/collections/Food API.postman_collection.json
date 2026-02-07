@@ -80,7 +80,7 @@
                 ],
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"name\": \"Jane Vendor\",\n  \"email\": \"vendor@example.com\",\n  \"password\": \"password123\",\n  \"businessName\": \"Jane's Kitchen\",\n  \"businessAddress\": \"123 Main Street, City, State 12345\",\n  \"businessPhone\": \"1234567890\"\n}"
+                  "raw": "{\n  \"name\": \"Chinedu Okafor\",\n  \"email\": \"chinedu@lagosbuka.com\",\n  \"password\": \"StrongPass123!\",\n  \"businessName\": \"Mama Nkechi Buka\",\n  \"businessAddress\": \"12 Ogunlana Drive, Surulere, Lagos\",\n  \"businessPhone\": \"+2348034567890\"\n}\n\n\n"
                 },
                 "url": {
                   "raw": "{{baseUrl}}/api/auth/vendor/signup",
@@ -376,6 +376,16 @@
               "name": "Get All Categories",
               "id": "3135dc40-413c-4359-a0c8-fb602e74863c",
               "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTg3MjlhNmEwMmM0ZTJkMTQzYjUzZTgiLCJpYXQiOjE3NzA0NjU5NTAsImV4cCI6MTc3MTA3MDc1MH0.S7yln5FgLgizCutkK-DnPKWoEWqK5YlNs7M72GkLjjs",
+                      "type": "string"
+                    }
+                  ]
+                },
                 "method": "GET",
                 "header": [],
                 "url": {
@@ -410,7 +420,8 @@
                   ],
                   "variable": [
                     {
-                      "key": "id"
+                      "key": "id",
+                      "value": "69872d2d0c41f110de37004f"
                     }
                   ]
                 },
@@ -524,6 +535,16 @@
               "name": "Delete Category",
               "id": "ab37fd00-a990-4dcc-9a7a-17f5a518e823",
               "request": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2OTg3MjlhNmEwMmM0ZTJkMTQzYjUzZTgiLCJpYXQiOjE3NzA0NjU5NTAsImV4cCI6MTc3MTA3MDc1MH0.S7yln5FgLgizCutkK-DnPKWoEWqK5YlNs7M72GkLjjs",
+                      "type": "string"
+                    }
+                  ]
+                },
                 "method": "DELETE",
                 "header": [
                   {
@@ -543,7 +564,8 @@
                   ],
                   "variable": [
                     {
-                      "key": "id"
+                      "key": "id",
+                      "value": "69872c9e0c41f110de370044"
                     }
                   ]
                 },
@@ -560,19 +582,19 @@
   ],
   "variable": [
     {
-      "id": "7284dfb3-2a17-49dd-ba3b-82fa47f403b2",
+      "id": "f72fb494-8c4d-4953-8cd9-ac201cfa5d5a",
       "key": "baseUrl",
       "value": "http://localhost:3000",
       "type": "string"
     },
     {
-      "id": "1e7a12e8-d158-4708-8ce9-4cc834071500",
+      "id": "aca19a76-6692-4a84-b6ea-34150ab09a84",
       "key": "token",
       "value": "",
       "type": "string"
     },
     {
-      "id": "9e7b9c1b-8a81-4af4-9be8-eccb27381aa4",
+      "id": "5e676dcd-9f09-4022-b558-4db6661f6cec",
       "key": "resetToken",
       "value": "",
       "type": "string"

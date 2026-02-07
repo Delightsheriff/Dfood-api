@@ -5,8 +5,8 @@ import User, { IUser } from "../models/User";
 import { env } from "../config/env";
 import {
   ConflictError,
-  ForbiddenError,
   UnauthorizedError,
+  ForbiddenError,
 } from "../types/errors";
 import {
   SignupInput,
@@ -15,8 +15,6 @@ import {
   VerifyOTPInput,
   ResetPasswordInput,
   UserRole,
-  VendorStatus,
-  VendorSignupInput,
 } from "../types/auth";
 
 export class AuthService {
@@ -28,9 +26,8 @@ export class AuthService {
       expiresIn: expiresIn as any,
     });
   }
-
   private generateResetToken(userId: string): string {
-    return jwt.sign({ userId, purpose: "password-reset" }, env.JWT_SECRET!, {
+    return jwt.sign({ userId, purpose: "password-reset" }, env.JWT_SECRET, {
       expiresIn: "5m",
     });
   }
@@ -45,10 +42,6 @@ export class AuthService {
       name: user.name,
       email: user.email,
       role: user.role,
-      ...(user.role === UserRole.VENDOR && {
-        vendorStatus: user.vendorStatus,
-        businessName: user.businessName,
-      }),
     };
   }
 
@@ -68,8 +61,29 @@ export class AuthService {
     return { user: this.sanitizeUser(user), token };
   }
 
+  async createAdmin(
+    data: SignupInput,
+    creatorId: string,
+  ): Promise<{ user: any }> {
+    const creator = await User.findById(creatorId);
+    if (!creator || creator.role !== UserRole.ADMIN) {
+      throw new ForbiddenError("Only admins can create admin accounts");
+    }
+
+    const existingUser = await User.findOne({ email: data.email });
+    if (existingUser) {
+      throw new ConflictError("Email already registered");
+    }
+
+    const user = await User.create({
+      ...data,
+      role: UserRole.ADMIN,
+    });
+
+    return { user: this.sanitizeUser(user) };
+  }
+
   async googleAuth(user: IUser): Promise<{ user: any; token: string }> {
-    // Ensure Google users are always customers
     if (user.role !== UserRole.CUSTOMER) {
       throw new ForbiddenError(
         "Google OAuth is only available for customer accounts",
@@ -93,21 +107,6 @@ export class AuthService {
       throw new UnauthorizedError("Invalid credentials");
     }
 
-    // Check vendor status
-    if (
-      user.role === UserRole.VENDOR &&
-      user.vendorStatus === VendorStatus.SUSPENDED
-    ) {
-      throw new ForbiddenError("Your vendor account has been suspended");
-    }
-
-    if (
-      user.role === UserRole.VENDOR &&
-      user.vendorStatus === VendorStatus.REJECTED
-    ) {
-      throw new ForbiddenError("Your vendor application was rejected");
-    }
-
     const token = this.generateToken(user._id.toString());
 
     return { user: this.sanitizeUser(user), token };
@@ -119,16 +118,14 @@ export class AuthService {
     );
 
     if (!user) {
-      // Security: don't reveal if email exists
       return;
     }
 
     const otp = this.generateOTP();
     user.resetOTP = await bcrypt.hash(otp, 10);
-    user.resetOTPExpire = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    user.resetOTPExpire = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    // TODO: Send OTP via email service
     console.log(`[DEV] OTP for ${data.email}: ${otp}`);
   }
 
@@ -161,7 +158,6 @@ export class AuthService {
       throw new UnauthorizedError("Invalid reset session");
     }
 
-    // Clear OTP data
     user.password = data.newPassword;
     user.resetOTP = undefined;
     user.resetOTPExpire = undefined;
@@ -198,55 +194,5 @@ export class AuthService {
     } catch (error) {
       throw new UnauthorizedError("Invalid or expired reset token");
     }
-  }
-
-  async createAdmin(
-    data: SignupInput,
-    creatorId: string,
-  ): Promise<{ user: any }> {
-    // Verify creator is admin
-    const creator = await User.findById(creatorId);
-    if (!creator || creator.role !== UserRole.ADMIN) {
-      throw new ForbiddenError("Only admins can create admin accounts");
-    }
-
-    const existingUser = await User.findOne({ email: data.email });
-    if (existingUser) {
-      throw new ConflictError("Email already registered");
-    }
-
-    const user = await User.create({
-      ...data,
-      role: UserRole.ADMIN,
-    });
-
-    return { user: this.sanitizeUser(user) };
-  }
-
-  async vendorSignup(
-    data: VendorSignupInput,
-  ): Promise<{ user: any; token: string }> {
-    const existingUser = await User.findOne({ email: data.email });
-    if (existingUser) {
-      throw new ConflictError("Email already registered");
-    }
-
-    const user = await User.create({
-      name: data.name,
-      email: data.email,
-      password: data.password,
-      role: UserRole.VENDOR,
-      vendorStatus: VendorStatus.PENDING,
-      businessName: data.businessName,
-      businessAddress: data.businessAddress,
-      businessPhone: data.businessPhone,
-    });
-
-    const token = this.generateToken(user._id.toString());
-
-    // TODO: Send verification email
-    // TODO: Notify admins of new vendor application
-
-    return { user: this.sanitizeUser(user), token };
   }
 }
