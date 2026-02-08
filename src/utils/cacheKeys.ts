@@ -1,10 +1,5 @@
-/**
- * Centralized cache key definitions
- * TTL values in seconds
- */
-
 export const CACHE_KEYS = {
-  // Categories (rarely change)
+  // Categories
   CATEGORIES_ALL: "categories:all",
   CATEGORY_BY_ID: (id: string) => `category:${id}`,
 
@@ -22,9 +17,9 @@ export const CACHE_KEYS = {
 };
 
 export const CACHE_TTL = {
-  CATEGORIES: 86400, // 24 hours (stable data)
+  CATEGORIES: 86400, // 24 hours
   RESTAURANT_DETAILS: 3600, // 1 hour
-  RESTAURANT_LIST: 300, // 5 minutes (status changes)
+  RESTAURANT_LIST: 300, // 5 minutes
   FOOD_ITEMS: 1800, // 30 minutes
   SEARCH_RESULTS: 600, // 10 minutes
 };
