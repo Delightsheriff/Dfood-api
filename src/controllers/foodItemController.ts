@@ -6,6 +6,7 @@ import { ValidationError } from "../types/errors";
 
 export const createFoodItem = asyncHandler(
   async (req: Request, res: Response) => {
+    console.log("Creating food item with data:", req.body);
     const files = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {

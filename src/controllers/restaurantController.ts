@@ -9,7 +9,6 @@ import { ValidationError } from "../types/errors";
 
 export const createRestaurant = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("Creating restaurant with data:", req.body);
     const files = req.files as Express.Multer.File[];
 
     if (!files || files.length === 0) {
