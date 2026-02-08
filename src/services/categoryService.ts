@@ -3,7 +3,8 @@ import { cloudinaryService } from "./cloudinaryService";
 import { cacheService } from "./cacheService";
 import { CACHE_KEYS, CACHE_TTL } from "../utils/cacheKeys";
 import { CreateCategoryInput, UpdateCategoryInput } from "../types/category";
-import { ConflictError, NotFoundError } from "../types/errors";
+import { ConflictError, NotFoundError, ValidationError } from "../types/errors";
+import FoodItem from "../models/FoodItem";
 
 export class CategoryService {
   async create(
@@ -114,11 +115,13 @@ export class CategoryService {
       throw new NotFoundError("Category not found");
     }
 
-    // TODO: Check if category has food items (when FoodItem model exists)
-    // const hasItems = await FoodItem.exists({ categoryIds: id });
-    // if (hasItems) {
-    //   throw new ValidationError('Cannot delete category with existing food items');
-    // }
+    // Check if category has food items
+    const hasItems = await FoodItem.exists({ categoryIds: id });
+    if (hasItems) {
+      throw new ValidationError(
+        "Cannot delete category with existing food items",
+      );
+    }
 
     // Delete image
     await cloudinaryService.deleteImage(category.image);

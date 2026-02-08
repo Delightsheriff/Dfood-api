@@ -4,6 +4,7 @@ import helmet from "helmet";
 import authRoutes from "./routes/authRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import restaurantRoutes from "./routes/restaurantRoutes";
+import foodItemRoutes from "./routes/foodItemRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
 
@@ -24,6 +25,7 @@ app.get("/health", (_req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/restaurants", restaurantRoutes);
+app.use("/api/food-items", foodItemRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
