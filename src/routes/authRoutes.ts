@@ -13,6 +13,7 @@ import {
 import { protect, restrictTo } from "../middleware/auth";
 import { authLimiter, forgotPasswordLimiter } from "../middleware/rateLimiter";
 import { UserRole } from "../types/auth";
+// import { redisClient } from "../config/redis";
 
 const router = Router();
 
@@ -51,5 +52,16 @@ router.get("/google/failure", (_req, res) => {
 // Protected routes
 router.get("/session", protect, getSession);
 router.post("/admin/create", protect, restrictTo(UserRole.ADMIN), createAdmin);
+
+// router.get("/debug/flush", async (req, res) => {
+//   const client = redisClient.getClient();
+//   if (client) {
+//     await client.flushdb();
+//     const keys = await client.keys("*");
+//     res.json({ flushed: true, remainingKeys: keys });
+//   } else {
+//     res.json({ error: "No client" });
+//   }
+// });
 
 export default router;

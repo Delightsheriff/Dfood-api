@@ -10,11 +10,20 @@ export class CacheService {
     try {
       const client = redisClient.getClient();
       if (!client || !redisClient.isReady()) {
-        return null; // Graceful degradation
+        return null;
       }
 
       const data = await client.get(key);
-      return data ? JSON.parse(data) : null;
+
+      // Upstash REST client returns already-parsed data
+      // Standard Redis client returns string
+      if (data === null || data === undefined) return null;
+
+      // If it's already an object, return it
+      if (typeof data === "object") return data as T;
+
+      // If it's a string, parse it (backwards compatibility)
+      return JSON.parse(data as string) as T;
     } catch (error) {
       console.error(`Cache GET error for key ${key}:`, error);
       return null;
@@ -24,6 +33,22 @@ export class CacheService {
   /**
    * Set cached data with optional TTL
    */
+  // async set(
+  //   key: string,
+  //   value: any,
+  //   ttl: number = this.defaultTTL,
+  // ): Promise<void> {
+  //   try {
+  //     const client = redisClient.getClient();
+  //     if (!client || !redisClient.isReady()) {
+  //       return; // Graceful degradation
+  //     }
+
+  //     await client.setex(key, ttl, JSON.stringify(value));
+  //   } catch (error) {
+  //     console.error(`Cache SET error for key ${key}:`, error);
+  //   }
+  // }
   async set(
     key: string,
     value: any,
@@ -32,10 +57,18 @@ export class CacheService {
     try {
       const client = redisClient.getClient();
       if (!client || !redisClient.isReady()) {
-        return; // Graceful degradation
+        return;
       }
 
-      await client.setex(key, ttl, JSON.stringify(value));
+      // Upstash REST client auto-serializes objects
+      // Standard Redis requires manual JSON.stringify
+      // Check which client you're using:
+
+      // If using @upstash/redis (REST):
+      await client.setex(key, ttl, value); // NO stringify needed
+
+      // If using ioredis or node-redis:
+      // await client.setex(key, ttl, JSON.stringify(value));
     } catch (error) {
       console.error(`Cache SET error for key ${key}:`, error);
     }
