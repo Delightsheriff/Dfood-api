@@ -10,6 +10,7 @@ import {
   ForbiddenError,
   ValidationError,
 } from "../types/errors";
+import { checkIsOpen } from "../utils/timeUtils";
 
 export class FoodItemService {
   async create(
@@ -146,54 +147,6 @@ export class FoodItemService {
     return this.getByRestaurantId(restaurant._id.toString());
   }
 
-  // async getByCategoryId(categoryId: string): Promise<any[]> {
-  //   return cacheService.getOrSet(
-  //     CACHE_KEYS.FOOD_BY_CATEGORY(categoryId),
-  //     async () => {
-  //       // Get food items in this category
-  //       const foodItems = await FoodItem.find({
-  //         categoryIds: categoryId,
-  //       })
-  //         .populate("restaurantId")
-  //         .lean();
-
-  //       // Filter to only show items from open restaurants
-  //       return foodItems
-  //         .filter((item) => {
-  //           item.restaurantId != null;
-  //           // const restaurant = item.restaurantId as any;
-  //           // if (!restaurant) return false;
-
-  //           // // Check if restaurant is open
-  //           // const now = new Date();
-  //           // const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-  //           // const [openHour, openMin] = restaurant.openingTime
-  //           //   .split(":")
-  //           //   .map(Number);
-  //           // const [closeHour, closeMin] = restaurant.closingTime
-  //           //   .split(":")
-  //           //   .map(Number);
-  //           // const [currHour, currMin] = currentTime.split(":").map(Number);
-
-  //           // const openMinutes = openHour * 60 + openMin;
-  //           // const closeMinutes = closeHour * 60 + closeMin;
-  //           // const currMinutes = currHour * 60 + currMin;
-
-  //           // if (closeMinutes < openMinutes) {
-  //           //   return currMinutes >= openMinutes || currMinutes < closeMinutes;
-  //           // }
-
-  //           // return currMinutes >= openMinutes && currMinutes < closeMinutes;
-  //         })
-  //         .map((item) => ({
-  //           ...item,
-  //           restaurant: item.restaurantId,
-  //         }));
-  //     },
-  //     CACHE_TTL.FOOD_ITEMS,
-  //   );
-  // }
   async getByCategoryId(categoryId: string): Promise<any[]> {
     return cacheService.getOrSet(
       CACHE_KEYS.FOOD_BY_CATEGORY(categoryId),
@@ -201,15 +154,30 @@ export class FoodItemService {
         const foodItems = await FoodItem.find({
           categoryIds: categoryId,
         })
-          .populate("restaurantId")
+          .populate({
+            path: "restaurantId",
+            select:
+              "name images address deliveryFee openingTime closingTime rating totalReviews",
+          })
           .lean();
 
         return foodItems
           .filter((item) => item.restaurantId != null)
-          .map((item) => ({
-            ...item,
-            restaurant: item.restaurantId,
-          }));
+          .map((item) => {
+            const restaurant = item.restaurantId as any;
+            return {
+              ...item,
+              restaurant: {
+                ...restaurant,
+                status: checkIsOpen(
+                  restaurant.openingTime,
+                  restaurant.closingTime,
+                )
+                  ? "Open"
+                  : "Closed",
+              },
+            };
+          });
       },
       CACHE_TTL.FOOD_ITEMS,
     );
