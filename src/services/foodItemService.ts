@@ -66,10 +66,58 @@ export class FoodItemService {
     return foodItem;
   }
 
+  // async getById(id: string): Promise<IFoodItem> {
+  //   const foodItem = await cacheService.getOrSet(
+  //     CACHE_KEYS.FOOD_BY_ID(id),
+  //     async () => FoodItem.findById(id).lean(),
+  //     CACHE_TTL.FOOD_ITEMS,
+  //   );
+
+  //   if (!foodItem) {
+  //     throw new NotFoundError("Food item not found");
+  //   }
+
+  //   return foodItem as IFoodItem;
+  // }
+
   async getById(id: string): Promise<IFoodItem> {
     const foodItem = await cacheService.getOrSet(
       CACHE_KEYS.FOOD_BY_ID(id),
-      async () => FoodItem.findById(id).lean(),
+      async () => {
+        const item = await FoodItem.findById(id)
+          .populate({
+            path: "restaurantId",
+            select:
+              "name images address deliveryFee openingTime closingTime rating totalReviews",
+          })
+          .lean();
+
+        if (!item) return null;
+
+        // Manually compute status since lean() strips virtuals
+        const restaurant = item.restaurantId as any;
+        if (restaurant) {
+          const now = new Date();
+          const currMinutes = now.getHours() * 60 + now.getMinutes();
+          const [openHour, openMin] = restaurant.openingTime
+            .split(":")
+            .map(Number);
+          const [closeHour, closeMin] = restaurant.closingTime
+            .split(":")
+            .map(Number);
+          const openMinutes = openHour * 60 + openMin;
+          const closeMinutes = closeHour * 60 + closeMin;
+
+          const isOpen =
+            closeMinutes < openMinutes
+              ? currMinutes >= openMinutes || currMinutes < closeMinutes
+              : currMinutes >= openMinutes && currMinutes < closeMinutes;
+
+          restaurant.status = isOpen ? "Open" : "Closed";
+        }
+
+        return item;
+      },
       CACHE_TTL.FOOD_ITEMS,
     );
 
