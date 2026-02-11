@@ -21,3 +21,10 @@ export const forgotPasswordLimiter = rateLimit({
     throw new TooManyRequestsError("Too many password reset attempts");
   },
 });
+
+export const searchLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30, // 30 searches per minute
+  standardHeaders: true,
+  legacyHeaders: false,
+});
