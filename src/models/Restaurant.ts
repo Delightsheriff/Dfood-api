@@ -80,6 +80,7 @@ const restaurantSchema = new Schema<IRestaurant>(
 
 restaurantSchema.index({ name: 1 });
 restaurantSchema.index({ ownerId: 1, name: 1 });
+restaurantSchema.index({ name: "text" });
 
 restaurantSchema.methods.isOpen = function (): boolean {
   return checkIsOpen(this.openingTime, this.closingTime);
