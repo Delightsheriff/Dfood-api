@@ -40,9 +40,11 @@ export class AuthService {
   private sanitizeUser(user: IUser): SanitizedUser {
     return {
       id: user._id.toString(), // Convert ObjectId to string
-      name: user.name,
       email: user.email,
+      name: user.name,
       role: user.role,
+      profileImage: user.profileImage,
+      phone: user.phone,
     };
   }
 

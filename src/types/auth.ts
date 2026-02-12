@@ -11,6 +11,8 @@ export type SanitizedUser = {
   name: string;
   email: string;
   role: UserRole;
+  profileImage?: string;
+  phone?: string;
 };
 
 export const signupSchema = z.object({
