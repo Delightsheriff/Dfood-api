@@ -31,6 +31,10 @@ const envSchema = z.object({
   // Frontend URL for OAuth redirects
   CLIENT_URL: z.url().default("http://localhost:3000"),
 
+  // Paystack
+  PAYSTACK_SECRET_KEY: z.string().min(1),
+  PAYSTACK_PUBLIC_KEY: z.string().min(1),
+
   SMTP_HOST: z.string().optional(),
   SMTP_PORT: z.string().transform(Number).optional(),
   SMTP_USER: z.string().optional(),
