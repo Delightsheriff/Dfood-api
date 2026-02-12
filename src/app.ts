@@ -6,6 +6,7 @@ import categoryRoutes from "./routes/categoryRoutes";
 import restaurantRoutes from "./routes/restaurantRoutes";
 import foodItemRoutes from "./routes/foodItemRoutes";
 import searchRoutes from "./routes/searchRoutes";
+import profileRoutes from "./routes/profileRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
 
@@ -28,6 +29,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/food-items", foodItemRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/profile", profileRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
