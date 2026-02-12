@@ -8,6 +8,8 @@ import foodItemRoutes from "./routes/foodItemRoutes";
 import searchRoutes from "./routes/searchRoutes";
 import profileRoutes from "./routes/profileRoutes";
 import favoriteRoutes from "./routes/favoriteRoutes";
+import addressRoutes from "./routes/addressRoutes";
+
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
 
@@ -32,6 +34,7 @@ app.use("/api/food-items", foodItemRoutes);
 app.use("/api/search", searchRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/favorites", favoriteRoutes);
+app.use("/api/addresses", addressRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
