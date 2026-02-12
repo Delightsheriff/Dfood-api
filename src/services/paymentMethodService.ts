@@ -1,5 +1,4 @@
 import PaymentMethod, { IPaymentMethod } from "../models/PaymentMethod";
-import User from "../models/User";
 import { paystackService } from "./paystackService";
 import { AddCardInput } from "../types/payment";
 import {
