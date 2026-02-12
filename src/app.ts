@@ -9,6 +9,7 @@ import searchRoutes from "./routes/searchRoutes";
 import profileRoutes from "./routes/profileRoutes";
 import favoriteRoutes from "./routes/favoriteRoutes";
 import addressRoutes from "./routes/addressRoutes";
+import paymentMethodRoutes from "./routes/paymentMethodRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -35,6 +36,7 @@ app.use("/api/search", searchRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/addresses", addressRoutes);
+app.use("/api/payment-methods", paymentMethodRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
