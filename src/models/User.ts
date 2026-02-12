@@ -9,6 +9,8 @@ export interface IUser extends Document {
   password: string;
   role: UserRole;
   googleId?: string;
+  profileImage?: string;
+  phone?: string;
   resetOTP?: string;
   resetOTPExpire?: Date;
   createdAt: Date;
@@ -45,6 +47,13 @@ const userSchema = new Schema<IUser>(
     googleId: {
       type: String,
       sparse: true,
+    },
+    profileImage: {
+      type: String,
+    },
+    phone: {
+      type: String,
+      trim: true,
     },
     resetOTP: {
       type: String,
