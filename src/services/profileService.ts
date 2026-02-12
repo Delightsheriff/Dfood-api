@@ -65,7 +65,6 @@ export class ProfileService {
           console.error("Failed to delete old profile image:", err),
         );
     }
-
     return this.sanitizeUser(user);
   }
 
