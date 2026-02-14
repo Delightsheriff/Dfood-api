@@ -1,7 +1,13 @@
-import Paystack from "paystack-api";
+import axios from "axios";
 import { env } from "../config/env";
 
-const paystack = Paystack(env.PAYSTACK_SECRET_KEY);
+const paystackAxios = axios.create({
+  baseURL: "https://api.paystack.co",
+  headers: {
+    Authorization: `Bearer ${env.PAYSTACK_SECRET_KEY}`,
+    "Content-Type": "application/json",
+  },
+});
 
 export class PaystackService {
   /**
@@ -9,16 +15,23 @@ export class PaystackService {
    */
   async verifyTransaction(reference: string): Promise<any> {
     try {
-      const response = await paystack.transaction.verify(reference);
+      const response = await paystackAxios.get(
+        `/transaction/verify/${reference}`,
+      );
 
-      if (!response.status) {
+      if (!response.data.status) {
         throw new Error("Transaction verification failed");
       }
 
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
-      console.error("Paystack verification error:", error);
-      throw new Error(error.message || "Failed to verify transaction");
+      console.error(
+        "Paystack verification error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        error.response?.data?.message || "Failed to verify transaction",
+      );
     }
   }
 
@@ -28,23 +41,29 @@ export class PaystackService {
   async chargeAuthorization(
     authorizationCode: string,
     email: string,
-    amount: number, // Amount in kobo (NGN smallest unit)
+    amount: number,
   ): Promise<any> {
     try {
-      const response = await paystack.transaction.charge({
-        authorization_code: authorizationCode,
-        email,
-        amount,
-      });
+      const response = await paystackAxios.post(
+        "/transaction/charge_authorization",
+        {
+          authorization_code: authorizationCode,
+          email,
+          amount,
+        },
+      );
 
-      if (!response.status) {
-        throw new Error("Payment failed");
+      if (!response.data.status) {
+        throw new Error(response.data.message || "Payment failed");
       }
 
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
-      console.error("Paystack charge error:", error);
-      throw new Error(error.message || "Payment failed");
+      console.error(
+        "Paystack charge error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(error.response?.data?.message || "Payment failed");
     }
   }
 
@@ -57,21 +76,26 @@ export class PaystackService {
     reference: string,
   ): Promise<any> {
     try {
-      const response = await paystack.transaction.initialize({
+      const response = await paystackAxios.post("/transaction/initialize", {
         email,
         amount,
         reference,
         channels: ["card"],
       });
 
-      if (!response.status) {
+      if (!response.data.status) {
         throw new Error("Failed to initialize transaction");
       }
 
-      return response.data;
+      return response.data.data;
     } catch (error: any) {
-      console.error("Paystack initialization error:", error);
-      throw new Error(error.message || "Failed to initialize payment");
+      console.error(
+        "Paystack initialization error:",
+        error.response?.data || error.message,
+      );
+      throw new Error(
+        error.response?.data?.message || "Failed to initialize payment",
+      );
     }
   }
 }
