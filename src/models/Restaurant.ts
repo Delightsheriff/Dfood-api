@@ -86,11 +86,4 @@ restaurantSchema.methods.isOpen = function (): boolean {
   return checkIsOpen(this.openingTime, this.closingTime);
 };
 
-restaurantSchema.virtual("status").get(function () {
-  return this.isOpen() ? "Open" : "Closed";
-});
-
-restaurantSchema.set("toJSON", { virtuals: true });
-restaurantSchema.set("toObject", { virtuals: true });
-
 export default mongoose.model<IRestaurant>("Restaurant", restaurantSchema);

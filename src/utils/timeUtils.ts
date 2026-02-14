@@ -13,5 +13,10 @@ export const checkIsOpen = (
     return currMinutes >= openMinutes || currMinutes < closeMinutes;
   }
 
+  // Handle overnight closing (e.g., 22:00 - 02:00)
+  if (closeMinutes < openMinutes) {
+    return currMinutes >= openMinutes || currMinutes < closeMinutes;
+  }
+
   return currMinutes >= openMinutes && currMinutes < closeMinutes;
 };

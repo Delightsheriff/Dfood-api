@@ -29,6 +29,7 @@ export class OrderService {
    * Create new order
    */
   async create(userId: string, data: CreateOrderInput): Promise<IOrder> {
+    console.log("Creating order with data:", data);
     // 1. Validate restaurant exists and is open
     const restaurant = await Restaurant.findById(data.restaurantId);
     if (!restaurant) {
@@ -144,10 +145,12 @@ export class OrderService {
       customerNotes: data.customerNotes,
     });
 
-    // Populate restaurant for response
-    await order.populate("restaurantId", "name images");
+    // Populate restaurant for response - DON'T use toJSON which triggers virtuals
+    const populatedOrder = await Order.findById(order._id)
+      .populate("restaurantId", "name images address phone")
+      .lean(); // Use lean to avoid virtual computation issues
 
-    return order;
+    return populatedOrder as IOrder;
   }
 
   /**
