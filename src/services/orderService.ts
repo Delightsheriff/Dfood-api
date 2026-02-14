@@ -29,7 +29,6 @@ export class OrderService {
    * Create new order
    */
   async create(userId: string, data: CreateOrderInput): Promise<IOrder> {
-    console.log("Creating order with data:", data);
     // 1. Validate restaurant exists and is open
     const restaurant = await Restaurant.findById(data.restaurantId);
     if (!restaurant) {
