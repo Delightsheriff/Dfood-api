@@ -15,6 +15,7 @@ import {
 } from "../types/errors";
 import { UserRole } from "../types/auth";
 import { Document } from "mongoose";
+import { checkIsOpen } from "../utils/timeUtils";
 
 export class RestaurantService {
   async create(
@@ -74,10 +75,12 @@ export class RestaurantService {
         const rest = await Restaurant.findById(id).lean();
         if (!rest) return null;
 
-        const instance = new Restaurant(rest);
+        // Use the utility function directly instead of creating instance
         return {
           ...rest,
-          status: instance.isOpen() ? "Open" : "Closed",
+          status: checkIsOpen(rest.openingTime, rest.closingTime)
+            ? "Open"
+            : "Closed",
         };
       },
       CACHE_TTL.RESTAURANT_DETAILS,
