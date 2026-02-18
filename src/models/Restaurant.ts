@@ -13,6 +13,7 @@ export interface IRestaurant extends Document {
   tags: string[];
   rating: number;
   totalReviews: number;
+  isProfileComplete: boolean;
   createdAt: Date;
   updatedAt: Date;
   isOpen(): boolean;
@@ -72,6 +73,11 @@ const restaurantSchema = new Schema<IRestaurant>(
       default: 0,
       min: 0,
     },
+    isProfileComplete: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
@@ -85,5 +91,16 @@ restaurantSchema.index({ name: "text" });
 restaurantSchema.methods.isOpen = function (): boolean {
   return checkIsOpen(this.openingTime, this.closingTime);
 };
+
+// Auto-check completion before saving
+restaurantSchema.pre("save", async function () {
+  // Profile is complete if it has at least 1 image and all required fields
+  this.isProfileComplete =
+    this.images.length > 0 &&
+    !!this.name &&
+    !!this.address &&
+    !!this.openingTime &&
+    !!this.closingTime;
+});
 
 export default mongoose.model<IRestaurant>("Restaurant", restaurantSchema);
