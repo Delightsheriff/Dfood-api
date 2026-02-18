@@ -6,6 +6,7 @@ import {
   updateRestaurantSchema,
 } from "../types/restaurant";
 import { ValidationError } from "../types/errors";
+import Restaurant from "../models/Restaurant";
 
 export const createRestaurant = asyncHandler(
   async (req: Request, res: Response) => {
@@ -121,6 +122,44 @@ export const deleteRestaurant = asyncHandler(
     res.status(200).json({
       success: true,
       message: "Restaurant deleted successfully",
+    });
+  },
+);
+
+export const getProfileStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const restaurant = await Restaurant.findOne({ ownerId: req.user!._id });
+
+    if (!restaurant) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          hasRestaurant: false,
+          isProfileComplete: false,
+          missingFields: ["restaurant"],
+        },
+      });
+    }
+
+    const missingFields: string[] = [];
+    if (restaurant.images.length === 0) missingFields.push("images");
+    if (!restaurant.address) missingFields.push("address");
+    if (!restaurant.description) missingFields.push("description");
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        hasRestaurant: true,
+        isProfileComplete: restaurant.isProfileComplete,
+        missingFields,
+        restaurant: {
+          id: restaurant._id,
+          name: restaurant.name,
+          images: restaurant.images,
+          address: restaurant.address,
+          description: restaurant.description,
+        },
+      },
     });
   },
 );

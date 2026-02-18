@@ -7,6 +7,7 @@ import {
   updateRestaurant,
   deleteRestaurantImage,
   deleteRestaurant,
+  getProfileStatus,
 } from "../controllers/restaurantController";
 import { protect, restrictTo } from "../middleware/auth";
 import { uploadMultiple } from "../middleware/upload";
@@ -20,6 +21,13 @@ router.get("/:id", getRestaurantById);
 
 // Protected routes - any authenticated user can create (becomes vendor)
 router.post("/", protect, uploadMultiple, createRestaurant);
+
+router.get(
+  "/my/profile-status",
+  protect,
+  restrictTo(UserRole.VENDOR),
+  getProfileStatus,
+);
 
 // Vendor-only routes
 router.get(

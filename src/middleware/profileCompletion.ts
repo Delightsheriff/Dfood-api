@@ -8,7 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler";
  * before accessing certain features (like creating food items)
  */
 export const requireCompleteProfile = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, _res: Response, next: NextFunction) => {
     // Get vendor's restaurant
     const restaurant = await Restaurant.findOne({ ownerId: req.user!._id });
 
