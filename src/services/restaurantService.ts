@@ -55,12 +55,6 @@ export class RestaurantService {
       images: imageUrls,
     });
 
-    // Auto-upgrade user to vendor if they're currently a customer
-    if (user.role === UserRole.CUSTOMER) {
-      user.role = UserRole.VENDOR;
-      await user.save();
-    }
-
     // Invalidate cache
     await cacheService.deletePattern("restaurants:*");
 
