@@ -11,6 +11,7 @@ import favoriteRoutes from "./routes/favoriteRoutes";
 import addressRoutes from "./routes/addressRoutes";
 import paymentMethodRoutes from "./routes/paymentMethodRoutes";
 import orderRoutes from "./routes/orderRoutes";
+import vendorAuthRoutes from "./routes/vendorAuthRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -30,6 +31,7 @@ app.get("/health", (_req: Request, res: Response) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/vendor", vendorAuthRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/food-items", foodItemRoutes);

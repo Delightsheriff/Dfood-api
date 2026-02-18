@@ -28,3 +28,10 @@ export const searchLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const signupLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 signups per 15 minutes
+  standardHeaders: true,
+  legacyHeaders: false,
+});
