@@ -1,6 +1,5 @@
 import Order from "../models/Order";
 import Restaurant from "../models/Restaurant";
-import FoodItem from "../models/FoodItem";
 import { NotFoundError } from "../types/errors";
 
 export class VendorAnalyticsService {
