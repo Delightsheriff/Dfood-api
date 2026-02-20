@@ -38,7 +38,7 @@ export const getVendorOrderById = asyncHandler(
   async (req: Request, res: Response) => {
     const order = await vendorOrderService.getOrderById(
       req.user!._id.toString(),
-      req.params.id,
+      req.params.id as string,
     );
 
     res.status(200).json({
@@ -54,7 +54,7 @@ export const updateOrderStatus = asyncHandler(
 
     const order = await vendorOrderService.updateOrderStatus(
       req.user!._id.toString(),
-      req.params.id,
+      req.params.id as string,
       status,
     );
 
