@@ -16,6 +16,8 @@ import adminUserRoutes from "./routes/adminUserRoutes";
 import dashboardSearchRoutes from "./routes/dashboardSearchRoutes";
 import adminOrderRoutes from "./routes/adminOrderRoutes";
 import vendorOrderRoutes from "./routes/vendorOrderRoutes";
+import vendorAnalyticsRoutes from "./routes/vendorAnalyticsRoutes";
+import adminAnalyticsRoutes from "./routes/adminAnalyticsRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -47,9 +49,11 @@ app.use("/api/payment-methods", paymentMethodRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/dashboard/search", dashboardSearchRoutes);
-app.use("/api/vendor/orders", vendorOrderRoutes); // Add vendor orders
-app.use("/api/admin/orders", adminOrderRoutes); // Add admin orders
+app.use("/api/vendor/orders", vendorOrderRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/vendor/analytics", vendorAnalyticsRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
