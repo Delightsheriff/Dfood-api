@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "lint": "eslint . --ext .ts",
-    "seed:admin": "ts-node src/scripts/seedAdmin.ts"
+    "seed:admin": "ts-node src/scripts/seedAdmin.ts",
+    "fix:restaurant-profiles": "ts-node src/scripts/fixRestaurantProfileFlags.ts"
   },
   "keywords": [],
   "author": "",
