@@ -14,6 +14,8 @@ import orderRoutes from "./routes/orderRoutes";
 import vendorAuthRoutes from "./routes/vendorAuthRoutes";
 import adminUserRoutes from "./routes/adminUserRoutes";
 import dashboardSearchRoutes from "./routes/dashboardSearchRoutes";
+import adminOrderRoutes from "./routes/adminOrderRoutes";
+import vendorOrderRoutes from "./routes/vendorOrderRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -45,6 +47,9 @@ app.use("/api/payment-methods", paymentMethodRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/dashboard/search", dashboardSearchRoutes);
+app.use("/api/vendor/orders", vendorOrderRoutes); // Add vendor orders
+app.use("/api/admin/orders", adminOrderRoutes); // Add admin orders
+app.use("/api/admin/users", adminUserRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
