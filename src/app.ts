@@ -18,6 +18,7 @@ import adminOrderRoutes from "./routes/adminOrderRoutes";
 import vendorOrderRoutes from "./routes/vendorOrderRoutes";
 import vendorAnalyticsRoutes from "./routes/vendorAnalyticsRoutes";
 import adminAnalyticsRoutes from "./routes/adminAnalyticsRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -54,6 +55,7 @@ app.use("/api/admin/orders", adminOrderRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/vendor/analytics", vendorAnalyticsRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
