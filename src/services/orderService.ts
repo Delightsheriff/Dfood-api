@@ -13,6 +13,7 @@ import {
 } from "../types/errors";
 import { checkIsOpen } from "../utils/timeUtils";
 import crypto from "crypto";
+import { notificationService } from "./notificationService";
 
 export class OrderService {
   /**
@@ -144,6 +145,13 @@ export class OrderService {
       customerNotes: data.customerNotes,
     });
 
+    // CREATE NOTIFICATION FOR VENDOR
+    await notificationService.notifyVendorNewOrder(
+      restaurant.ownerId.toString(),
+      order.orderNumber,
+      order._id.toString(),
+    );
+
     // Populate restaurant for response - DON'T use toJSON which triggers virtuals
     const populatedOrder = await Order.findById(order._id)
       .populate("restaurantId", "name images address phone")
@@ -217,6 +225,16 @@ export class OrderService {
 
     order.status = "cancelled";
     await order.save();
+
+    // NOTIFY VENDOR ABOUT CANCELLATION
+    const restaurant = await Restaurant.findById(order.restaurantId);
+    if (restaurant) {
+      await notificationService.notifyVendorOrderCancelled(
+        restaurant.ownerId.toString(),
+        order.orderNumber,
+        order._id.toString(),
+      );
+    }
 
     return order;
   }
