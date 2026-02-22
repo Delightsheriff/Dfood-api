@@ -4,6 +4,7 @@ import { UserRole } from "../types/auth";
 import { ConflictError } from "../types/errors";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
+import { notificationService } from "./notificationService";
 
 interface VendorSignupInput {
   firstName: string;
@@ -50,6 +51,14 @@ export class VendorAuthService {
       description: data.description || "",
       images: [], // Empty - vendor adds later
     });
+
+    // NOTIFY ADMINS ABOUT NEW VENDOR
+
+    await notificationService.notifyAdminsNewVendor(
+      user.name,
+      user._id.toString(),
+      restaurant.name,
+    );
 
     // Generate token
     const token = jwt.sign({ id: user._id, role: user.role }, env.JWT_SECRET!, {
