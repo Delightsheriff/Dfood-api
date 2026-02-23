@@ -1,6 +1,7 @@
 import Order from "../models/Order";
 import Restaurant from "../models/Restaurant";
 import { NotFoundError, ValidationError } from "../types/errors";
+import { pushNotificationService } from "./pushNotificationService";
 
 export class VendorOrderService {
   /**
@@ -109,6 +110,13 @@ export class VendorOrderService {
     // Update status
     order.status = newStatus as any;
     await order.save();
+
+    // SEND PUSH NOTIFICATION TO CUSTOMER
+    await pushNotificationService.sendOrderStatusUpdate(
+      order.customerId.toString(),
+      order.orderNumber,
+      newStatus,
+    );
 
     // Populate customer info for response
     await order.populate("customerId", "name email phone");
