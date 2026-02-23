@@ -19,6 +19,7 @@ import vendorOrderRoutes from "./routes/vendorOrderRoutes";
 import vendorAnalyticsRoutes from "./routes/vendorAnalyticsRoutes";
 import adminAnalyticsRoutes from "./routes/adminAnalyticsRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
+import deviceTokenRoutes from "./routes/deviceTokenRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -56,6 +57,7 @@ app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/vendor/analytics", vendorAnalyticsRoutes);
 app.use("/api/admin/analytics", adminAnalyticsRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/device-tokens", deviceTokenRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {
