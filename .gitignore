@@ -6,3 +6,4 @@ dist/
 .postman/
 postman/
 backup/
+firebase-service-account.json

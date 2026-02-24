@@ -1,16 +1,31 @@
-import admin from "firebase-admin";
 import User from "../models/User";
 
+// const EXPO_PUSH_URL = "https://exp.host/api/v2/push/send";
+const EXPO_PUSH_URL = "https://exp.host/--/api/v2/push/send";
+
+interface ExpoPushMessage {
+  to: string;
+  title: string;
+  body: string;
+  data?: Record<string, string>;
+  sound?: "default" | null;
+  priority?: "default" | "normal" | "high";
+}
+
+interface ExpoPushTicket {
+  status: "ok" | "error";
+  id?: string;
+  message?: string;
+  details?: { error?: string };
+}
+
 export class PushNotificationService {
-  /**
-   * Send push notification to a user
-   */
   async sendToUser(
     userId: string,
     title: string,
     body: string,
     data?: Record<string, string>,
-  ) {
+  ): Promise<void> {
     try {
       const user = await User.findById(userId).select("deviceTokens");
 
@@ -19,54 +34,81 @@ export class PushNotificationService {
         return;
       }
 
-      const tokens = user.deviceTokens.map((dt) => dt.token);
+      // Filter to Expo tokens only (they start with "ExponentPushToken[")
+      // const expoTokens = user.deviceTokens
+      //   .map((dt) => dt.token)
+      //   .filter((t) => t.startsWith("ExponentPushToken["));
+      const expoTokens = user.deviceTokens
+        .map((dt) => dt.token)
+        .filter((token) => /^Expo(nent)?PushToken\[.*\]$/.test(token));
 
-      const message: admin.messaging.MulticastMessage = {
-        notification: {
-          title,
-          body,
-        },
+      if (expoTokens.length === 0) {
+        console.log(`No Expo push tokens for user ${userId}`);
+        return;
+      }
+
+      const messages: ExpoPushMessage[] = expoTokens.map((token) => ({
+        to: token,
+        title,
+        body,
         data: data || {},
-        tokens,
-      };
+        sound: "default",
+        priority: "high",
+      }));
 
-      const response = await admin.messaging().sendEachForMulticast(message);
+      const response = await fetch(EXPO_PUSH_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          "Accept-encoding": "gzip, deflate",
+        },
+        body: JSON.stringify(messages),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Expo push API returned ${response.status}`);
+      }
+
+      const result = (await response.json()) as { data: ExpoPushTicket[] };
+      const tickets: ExpoPushTicket[] = result.data;
+
+      // Prune invalid tokens
+      const invalidTokens: string[] = [];
+      tickets.forEach((ticket, idx) => {
+        if (ticket.status === "error") {
+          console.warn(
+            `❌ Token failed: ${expoTokens[idx]} — ${ticket.message}`,
+          );
+          // DeviceNotRegistered means the token is dead
+          if (ticket.details?.error === "DeviceNotRegistered") {
+            invalidTokens.push(expoTokens[idx]);
+          }
+        }
+      });
+
+      if (invalidTokens.length > 0) {
+        user.deviceTokens = user.deviceTokens.filter(
+          (dt) => !invalidTokens.includes(dt.token),
+        );
+        await user.save({ validateModifiedOnly: true });
+        console.log(`🗑️ Removed ${invalidTokens.length} invalid tokens`);
+      }
 
       console.log(
-        `✅ Sent ${response.successCount} notifications to user ${userId}`,
+        `✅ Sent ${tickets.filter((t) => t.status === "ok").length} notifications`,
       );
-
-      // Remove invalid tokens
-      if (response.failureCount > 0) {
-        const invalidTokens: string[] = [];
-        response.responses.forEach((resp, idx) => {
-          if (!resp.success) {
-            invalidTokens.push(tokens[idx]);
-          }
-        });
-
-        if (invalidTokens.length > 0) {
-          user.deviceTokens = user.deviceTokens.filter(
-            (dt) => !invalidTokens.includes(dt.token),
-          );
-          await user.save();
-          console.log(`🗑️ Removed ${invalidTokens.length} invalid tokens`);
-        }
-      }
     } catch (error) {
       console.error("Push notification error:", error);
-      // Don't throw - notification failure shouldn't break the app
+      // Don't throw — notification failure shouldn't break the app
     }
   }
 
-  /**
-   * Helper: Send order status update notification
-   */
   async sendOrderStatusUpdate(
     userId: string,
     orderNumber: string,
     status: string,
-  ) {
+  ): Promise<void> {
     const messages: Record<string, { title: string; body: string }> = {
       confirmed: {
         title: "Order Confirmed! 🎉",

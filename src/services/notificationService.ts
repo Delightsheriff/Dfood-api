@@ -165,6 +165,46 @@ export class NotificationService {
       { vendorId, restaurantName },
     );
   }
+
+  /**
+   * Helper: Create notification for customer order status update
+   */
+  async notifyCustomerOrderStatus(
+    customerId: string,
+    orderNumber: string,
+    orderId: string,
+    status: string,
+  ) {
+    const messages: Record<string, { title: string; message: string }> = {
+      confirmed: {
+        title: "Order Confirmed! 🎉",
+        message: `Your order ${orderNumber} has been confirmed`,
+      },
+      preparing: {
+        title: "Food is Being Prepared 👨‍🍳",
+        message: `Your order ${orderNumber} is being prepared`,
+      },
+      out_for_delivery: {
+        title: "Order On The Way! 🚴",
+        message: `Your order ${orderNumber} is out for delivery`,
+      },
+      delivered: {
+        title: "Order Delivered! ⭐",
+        message: `Your order ${orderNumber} has been delivered. Rate your experience!`,
+      },
+    };
+
+    const msg = messages[status];
+    if (!msg) return;
+
+    return this.create(
+      customerId,
+      "order_status_update",
+      msg.title,
+      msg.message,
+      { orderId, orderNumber, status },
+    );
+  }
 }
 
 export const notificationService = new NotificationService();

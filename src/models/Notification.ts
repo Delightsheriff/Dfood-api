@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export type NotificationType =
   | "new_order" // Vendor: new order received
   | "order_cancelled" // Vendor: customer cancelled order
+  | "order_status_update" // Customer: order status changed
   | "new_vendor_signup"; // Admin: new vendor signed up
 
 export interface INotification extends Document {
@@ -26,7 +27,12 @@ const notificationSchema = new Schema<INotification>(
     },
     type: {
       type: String,
-      enum: ["new_order", "order_cancelled", "new_vendor_signup"],
+      enum: [
+        "new_order",
+        "order_cancelled",
+        "order_status_update",
+        "new_vendor_signup",
+      ],
       required: true,
     },
     title: {

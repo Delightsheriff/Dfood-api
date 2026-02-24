@@ -2,6 +2,7 @@ import Order from "../models/Order";
 import Restaurant from "../models/Restaurant";
 import { NotFoundError, ValidationError } from "../types/errors";
 import { pushNotificationService } from "./pushNotificationService";
+import { notificationService } from "./notificationService";
 
 export class VendorOrderService {
   /**
@@ -115,6 +116,14 @@ export class VendorOrderService {
     await pushNotificationService.sendOrderStatusUpdate(
       order.customerId.toString(),
       order.orderNumber,
+      newStatus,
+    );
+
+    // CREATE IN-APP NOTIFICATION FOR CUSTOMER
+    await notificationService.notifyCustomerOrderStatus(
+      order.customerId.toString(),
+      order.orderNumber,
+      order._id.toString(),
       newStatus,
     );
 

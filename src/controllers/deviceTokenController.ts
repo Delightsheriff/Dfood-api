@@ -14,9 +14,7 @@ export const registerDeviceToken = asyncHandler(
 
     const user = await User.findById(req.user!._id);
     if (!user) {
-      res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
@@ -25,7 +23,7 @@ export const registerDeviceToken = asyncHandler(
 
     if (!tokenExists) {
       user.deviceTokens.push({ token, platform, addedAt: new Date() });
-      await user.save();
+      await user.save({ validateModifiedOnly: true });
     }
 
     res.status(200).json({
@@ -41,14 +39,12 @@ export const unregisterDeviceToken = asyncHandler(
 
     const user = await User.findById(req.user!._id);
     if (!user) {
-      res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      res.status(404).json({ success: false, message: "User not found" });
       return;
     }
 
     user.deviceTokens = user.deviceTokens.filter((dt) => dt.token !== token);
-    await user.save();
+    await user.save({ validateModifiedOnly: true });
 
     res.status(200).json({
       success: true,
