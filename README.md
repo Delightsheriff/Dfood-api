@@ -1,887 +1,464 @@
-# Food Delivery API
+# DFood API
 
-A comprehensive backend API for a food delivery platform built with Node.js, Express, TypeScript, and MongoDB. Features include user authentication, restaurant management, order processing, and Paystack payment integration.
+Backend for the DFood food delivery platform. Built with Node.js, Express, TypeScript, and MongoDB.
 
-## Features
+**Connected apps:**
 
-### Authentication & Authorization
-
-- Email/password authentication with JWT
-- Google OAuth integration
-- Role-based access control (Customer, Vendor, Admin)
-- Forgot password with OTP verification
-- Secure password hashing with bcrypt
-
-### User Management
-
-- Profile management with image uploads
-- Multiple delivery addresses with geolocation
-- Payment methods (Cash on Delivery + Card via Paystack)
-- Order history and tracking
-
-### Restaurant & Menu
-
-- Restaurant profiles with multiple images
-- Dynamic open/closed status based on hours
-- Menu management with multi-category support
-- Food item images and details
-
-### Orders & Payments
-
-- Server-side price validation
-- Paystack card payment integration
-- Cash on delivery option
-- Order status tracking
-- Order cancellation (pending orders only)
-
-### Additional Features
-
-- Food & restaurant search
-- Category browsing
-- Favorites/wishlist
-- Redis caching for performance
-- Cloudinary image storage
+- 📱 Mobile App — [Dfood-app](https://github.com/Delightsheriff/Dfood-app)
+- 🖥️ Admin Dashboard — [Dfood-admin](https://github.com/Delightsheriff/Dfood-admin)
 
 ---
 
-## Prerequisites
+## Stack
+
+- **Runtime:** Node.js + TypeScript
+- **Framework:** Express v5
+- **Database:** MongoDB (Mongoose)
+- **Cache:** Redis (Upstash or local)
+- **Auth:** JWT + Google OAuth (Passport.js)
+- **Payments:** Paystack
+- **Storage:** Cloudinary
+- **Push Notifications:** Firebase Admin + Expo Push API
+- **Email:** Resend
+
+---
+
+## Features
+
+### Auth
+
+- Email/password + JWT
+- Google OAuth (customers only)
+- Role-based access: Customer · Vendor · Admin
+- Forgot password via OTP (4-digit, 15min expiry, delivered by email)
+- Transactional emails via Resend (welcome, OTP, reset confirmation)
+
+### Customers
+
+- Profile management + image uploads
+- Multiple delivery addresses with coordinates
+- Saved payment methods (cash + Paystack cards)
+- Orders: create, track, cancel, view history
+- Favorites (food items)
+- Search (food + restaurants)
+
+### Vendors
+
+- Dedicated signup flow (creates user + restaurant atomically)
+- Restaurant management: details, hours, images
+- Menu management: food items with multi-category support
+- Order management: view incoming orders, update status with validation
+- Order stats dashboard
+- Analytics: revenue, order volume, top items
+
+### Admins
+
+- Create admin accounts
+- User management
+- Category management
+- Order oversight
+- Platform-wide analytics
+
+### Notifications
+
+- **Push notifications** to mobile (Expo tokens, Firebase-backed)
+  - Sent on order status changes
+  - Invalid token pruning (DeviceNotRegistered handling)
+- **In-app notifications** stored in DB (90-day TTL)
+  - New orders (vendor)
+  - Order status updates (customer)
+  - New vendor signups (admin)
+
+### Performance
+
+- Redis caching: categories (24h), restaurants (1h), food items (30m), search (10m), favorites (30m)
+- MongoDB compound indexes on high-traffic queries
+- Cloudinary auto-format (WebP) + auto-quality
+
+### Security
+
+- Helmet.js
+- CORS
+- Rate limiting on auth endpoints
+- Bcrypt (12 rounds)
+- Zod input validation
+- Server-side price validation on orders
+- Paystack authorization code encryption (no raw card storage)
+
+---
+
+## Getting Started
+
+### Prerequisites
 
 - Node.js >= 18.x
 - MongoDB >= 6.x
 - Redis (Upstash or local)
 - Cloudinary account
-- Paystack account (for payments)
-- Google OAuth credentials (optional)
+- Paystack account
+- Firebase project with service account
+- Resend account + verified sending domain
 
----
-
-## Installation
-
-### 1. Clone Repository
+### Install
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/Delightsheriff/Dfood-api
 cd food-api
-```
-
-### 2. Install Dependencies
-
-```bash
 npm install
 ```
 
-### 3. Environment Setup
+### Environment
 
-Create `.env` file in the root directory:
+Copy `.env.example` to `.env` and fill in values:
 
 ```env
 NODE_ENV=development
-PORT=3000
-
-# Database
+PORT=4000
 MONGODB_URI=mongodb://localhost:27017/food-api
 
 # JWT
-JWT_SECRET=your-super-secret-key-min-32-chars-long-change-this
+JWT_SECRET=your-secret-min-32-chars
 JWT_EXPIRE=7d
 
-# Redis (Upstash recommended)
-REDIS_URL=rediss://default:your-password@your-host.upstash.io:6379
+# Redis
+REDIS_URL=rediss://default:password@host.upstash.io:6379
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
 
 # Cloudinary
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
 
 # Google OAuth
-GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/api/auth/google/callback
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_CALLBACK_URL=http://localhost:4000/api/auth/google/callback
 CLIENT_URL=http://localhost:3000
 
 # Paystack
-PAYSTACK_SECRET_KEY=sk_test_your_secret_key
-PAYSTACK_PUBLIC_KEY=pk_test_your_public_key
+PAYSTACK_SECRET_KEY=sk_test_
+PAYSTACK_PUBLIC_KEY=pk_test_
 
-# Email (Optional - for OTP)
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=your-email@gmail.com
-SMTP_PASS=your-app-password
+# Firebase (stringified service account JSON)
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account",...}
+
+# Resend
+RESEND_API_KEY=re_
+EMAIL_FROM=DFood <noreply@yourdomain.com>
 ```
 
-### 4. Seed Data
+### Run
 
 ```bash
-# Create admin account
-npm run seed:admin
-
-# Create food categories
-npm run seed:categories
-```
-
----
-
-## Running the Application
-
-### Development
-
-```bash
+# Development
 npm run dev
-```
 
-### Production
+# Production
+npm run build && npm start
 
-```bash
-npm run build
-npm start
-```
-
----
-
-## API Documentation
-
-### Base URL
-
-```
-http://localhost:3000/api
-```
-
-### Authentication Endpoints
-
-#### Sign Up (Customer)
-
-```http
-POST /auth/signup
-Content-Type: application/json
-
-{
-  "name": "John Doe",
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-
-#### Sign In
-
-```http
-POST /auth/signin
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "password123"
-}
-```
-
-#### Google OAuth
-
-```http
-GET /auth/google
-```
-
-#### Forgot Password
-
-```http
-POST /auth/forgot-password
-Content-Type: application/json
-
-{
-  "email": "john@example.com"
-}
-```
-
-#### Verify OTP
-
-```http
-POST /auth/verify-otp
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "otp": "1234"
-}
-```
-
-#### Reset Password
-
-```http
-POST /auth/reset-password
-Authorization: Bearer {resetToken}
-Content-Type: application/json
-
-{
-  "newPassword": "newPassword123"
-}
-```
-
-#### Get Session
-
-```http
-GET /auth/session
-Authorization: Bearer {token}
+# Seed admin account
+npm run seed:admin
 ```
 
 ---
 
-### Profile Endpoints
+## API Reference
 
-#### Get Profile
+**Base URL:** `http://localhost:4000/api`
 
-```http
-GET /profile
-Authorization: Bearer {token}
+All protected routes require:
+
 ```
-
-#### Update Profile
-
-```http
-PATCH /profile
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "name": "John Updated",
-  "phone": "+2348012345678"
-}
-```
-
-#### Update Profile Image
-
-```http
-POST /profile/image
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
-
-image: <file>
-```
-
-#### Delete Profile Image
-
-```http
-DELETE /profile/image
-Authorization: Bearer {token}
+Authorization: Bearer <token>
 ```
 
 ---
 
-### Category Endpoints
+### Auth — `/api/auth`
 
-#### Get All Categories
+| Method | Endpoint           | Auth        | Description                  |
+| ------ | ------------------ | ----------- | ---------------------------- |
+| POST   | `/signup`          | —           | Customer signup              |
+| POST   | `/signin`          | —           | Sign in (any role)           |
+| GET    | `/google`          | —           | Google OAuth redirect        |
+| GET    | `/google/callback` | —           | OAuth callback               |
+| GET    | `/session`         | ✅          | Get current user             |
+| POST   | `/forgot-password` | —           | Send OTP to email            |
+| POST   | `/verify-otp`      | —           | Verify OTP → get reset token |
+| POST   | `/reset-password`  | Reset token | Set new password             |
+| POST   | `/admin/create`    | Admin       | Create admin account         |
 
-```http
-GET /categories
+**Signup body:**
+
+```json
+{ "name": "John Doe", "email": "john@example.com", "password": "password123" }
 ```
 
-#### Get Category by ID
-
-```http
-GET /categories/{id}
-```
-
-#### Create Category (Admin Only)
-
-```http
-POST /categories
-Authorization: Bearer {adminToken}
-Content-Type: multipart/form-data
-
-name: Rice Dishes
-image: <file>
-```
-
-#### Update Category (Admin Only)
-
-```http
-PATCH /categories/{id}
-Authorization: Bearer {adminToken}
-Content-Type: multipart/form-data
-
-name: Rice Dishes Updated
-image: <file>
-```
-
-#### Delete Category (Admin Only)
-
-```http
-DELETE /categories/{id}
-Authorization: Bearer {adminToken}
-```
+**Forgot password:** sends a 4-digit OTP to the user's email via Resend.
+**Verify OTP:** returns a short-lived `resetToken` (5min) used for the reset call.
 
 ---
 
-### Restaurant Endpoints
+### Vendor Auth — `/api/vendor/auth`
 
-#### Get All Restaurants
-
-```http
-GET /restaurants?isOpen=true
-```
-
-#### Get Restaurant by ID
-
-```http
-GET /restaurants/{id}
-```
-
-#### Create Restaurant (Becomes Vendor)
-
-```http
-POST /restaurants
-Authorization: Bearer {token}
-Content-Type: multipart/form-data
-
-name: Mama's Kitchen
-description: Authentic Nigerian cuisine
-address: 45 Allen Avenue, Lagos
-deliveryFee: 500
-openingTime: 08:00
-closingTime: 22:00
-images: <file>
-images: <file>
-```
-
-#### Get My Restaurant (Vendor Only)
-
-```http
-GET /restaurants/my/restaurant
-Authorization: Bearer {vendorToken}
-```
-
-#### Update Restaurant (Vendor Only)
-
-```http
-PATCH /restaurants/{id}
-Authorization: Bearer {vendorToken}
-Content-Type: multipart/form-data
-
-name: Updated Name
-deliveryFee: 600
-images: <file>
-```
-
-#### Delete Restaurant Image (Vendor Only)
-
-```http
-DELETE /restaurants/{id}/images
-Authorization: Bearer {vendorToken}
-Content-Type: application/json
-
-{
-  "imageUrl": "https://res.cloudinary.com/..."
-}
-```
-
-#### Delete Restaurant (Vendor Only)
-
-```http
-DELETE /restaurants/{id}
-Authorization: Bearer {vendorToken}
-```
-
----
-
-### Food Item Endpoints
-
-#### Get Food Item by ID
-
-```http
-GET /food-items/{id}
-```
-
-#### Get Food Items by Restaurant
-
-```http
-GET /food-items/restaurant/{restaurantId}
-```
-
-#### Get Food Items by Category
-
-```http
-GET /food-items/category/{categoryId}
-```
-
-#### Create Food Item (Vendor Only)
-
-```http
-POST /food-items
-Authorization: Bearer {vendorToken}
-Content-Type: multipart/form-data
-
-name: Jollof Rice with Chicken
-description: Authentic Nigerian jollof rice
-price: 2500
-categoryIds: [categoryId1, categoryId2]
-calories: 650
-images: <file>
-images: <file>
-```
-
-#### Get My Food Items (Vendor Only)
-
-```http
-GET /food-items/my/items
-Authorization: Bearer {vendorToken}
-```
-
-#### Update Food Item (Vendor Only)
-
-```http
-PATCH /food-items/{id}
-Authorization: Bearer {vendorToken}
-Content-Type: multipart/form-data
-
-price: 3000
-images: <file>
-```
-
-#### Delete Food Item Image (Vendor Only)
-
-```http
-DELETE /food-items/{id}/images
-Authorization: Bearer {vendorToken}
-Content-Type: application/json
-
-{
-  "imageUrl": "https://res.cloudinary.com/..."
-}
-```
-
-#### Delete Food Item (Vendor Only)
-
-```http
-DELETE /food-items/{id}
-Authorization: Bearer {vendorToken}
-```
-
----
-
-### Search Endpoint
-
-```http
-GET /search?q=jollof
-```
-
-**Response:**
+| Method | Endpoint  | Auth | Description                                   |
+| ------ | --------- | ---- | --------------------------------------------- |
+| POST   | `/signup` | —    | Create vendor account + restaurant atomically |
 
 ```json
 {
-  "success": true,
-  "data": {
-    "foods": [...],
-    "restaurants": [...]
-  }
+  "firstName": "Amaka",
+  "lastName": "Obi",
+  "email": "amaka@restaurant.com",
+  "phone": "+2348012345678",
+  "password": "password123",
+  "restaurantName": "Mama's Kitchen",
+  "restaurantAddress": "45 Allen Ave, Lagos",
+  "deliveryFee": 500,
+  "openingTime": "08:00",
+  "closingTime": "22:00"
 }
 ```
 
 ---
 
-### Favorites Endpoints
+### Profile — `/api/profile`
 
-#### Get All Favorites
-
-```http
-GET /favorites
-Authorization: Bearer {token}
-```
-
-#### Add to Favorites
-
-```http
-POST /favorites/{foodItemId}
-Authorization: Bearer {token}
-```
-
-#### Remove from Favorites
-
-```http
-DELETE /favorites/{foodItemId}
-Authorization: Bearer {token}
-```
-
-#### Check if Favorited
-
-```http
-GET /favorites/{foodItemId}/check
-Authorization: Bearer {token}
-```
+| Method | Endpoint | Auth | Description                                  |
+| ------ | -------- | ---- | -------------------------------------------- |
+| GET    | `/`      | ✅   | Get profile                                  |
+| PATCH  | `/`      | ✅   | Update name/phone                            |
+| POST   | `/image` | ✅   | Upload profile image (`multipart/form-data`) |
+| DELETE | `/image` | ✅   | Remove profile image                         |
 
 ---
 
-### Address Endpoints
+### Restaurants — `/api/restaurants`
 
-#### Get All Addresses
-
-```http
-GET /addresses
-Authorization: Bearer {token}
-```
-
-#### Get Default Address
-
-```http
-GET /addresses/default
-Authorization: Bearer {token}
-```
-
-#### Create Address
-
-```http
-POST /addresses
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "label": "Home",
-  "street": "15 Admiralty Way, Lekki Phase 1",
-  "city": "Lagos",
-  "state": "Lagos",
-  "coordinates": {
-    "lat": 6.4474,
-    "lng": 3.4700
-  }
-}
-```
-
-#### Update Address
-
-```http
-PATCH /addresses/{id}
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "label": "Office",
-  "street": "23 Marina Street"
-}
-```
-
-#### Set Default Address
-
-```http
-PATCH /addresses/{id}/default
-Authorization: Bearer {token}
-```
-
-#### Delete Address
-
-```http
-DELETE /addresses/{id}
-Authorization: Bearer {token}
-```
+| Method | Endpoint         | Auth   | Description                                 |
+| ------ | ---------------- | ------ | ------------------------------------------- |
+| GET    | `/`              | —      | List all restaurants (`?isOpen=true`)       |
+| GET    | `/:id`           | —      | Get restaurant by ID                        |
+| GET    | `/my/restaurant` | Vendor | Get own restaurant                          |
+| POST   | `/`              | ✅     | Create restaurant (upgrades user to vendor) |
+| PATCH  | `/:id`           | Vendor | Update restaurant                           |
+| DELETE | `/:id/images`    | Vendor | Delete a restaurant image                   |
+| DELETE | `/:id`           | Vendor | Delete restaurant                           |
 
 ---
 
-### Payment Method Endpoints
+### Food Items — `/api/food-items`
 
-#### Get All Payment Methods
+| Method | Endpoint                    | Auth   | Description                              |
+| ------ | --------------------------- | ------ | ---------------------------------------- |
+| GET    | `/:id`                      | —      | Get food item                            |
+| GET    | `/restaurant/:restaurantId` | —      | Items by restaurant                      |
+| GET    | `/category/:categoryId`     | —      | Items by category                        |
+| GET    | `/my/items`                 | Vendor | Get vendor's items                       |
+| POST   | `/`                         | Vendor | Create food item (`multipart/form-data`) |
+| PATCH  | `/:id`                      | Vendor | Update food item                         |
+| DELETE | `/:id/images`               | Vendor | Delete food item image                   |
+| DELETE | `/:id`                      | Vendor | Delete food item                         |
 
-```http
-GET /payment-methods
-Authorization: Bearer {token}
-```
+---
 
-**Response includes cash + saved cards:**
+### Categories — `/api/categories`
+
+| Method | Endpoint | Auth  | Description                  |
+| ------ | -------- | ----- | ---------------------------- |
+| GET    | `/`      | —     | List all categories          |
+| GET    | `/:id`   | —     | Get category                 |
+| POST   | `/`      | Admin | Create category (with image) |
+| PATCH  | `/:id`   | Admin | Update category              |
+| DELETE | `/:id`   | Admin | Delete category              |
+
+---
+
+### Orders — `/api/orders`
+
+| Method | Endpoint               | Auth     | Description                          |
+| ------ | ---------------------- | -------- | ------------------------------------ |
+| POST   | `/`                    | Customer | Place order                          |
+| GET    | `/`                    | Customer | Order history                        |
+| GET    | `/:id`                 | Customer | Get order (by `_id` or order number) |
+| GET    | `/number/:orderNumber` | Customer | Get order by number                  |
+| PATCH  | `/:id/cancel`          | Customer | Cancel order (pending only)          |
 
 ```json
+// POST /orders
 {
-  "success": true,
-  "data": {
-    "paymentMethods": [
-      { "_id": "cash", "type": "cash", "isDefault": false },
-      { "_id": "card123", "type": "card", "cardLast4": "4081", ... }
-    ]
-  }
-}
-```
-
-#### Add Card
-
-```http
-POST /payment-methods/card
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "reference": "paystack_transaction_reference"
-}
-```
-
-#### Set Default Payment Method
-
-```http
-PATCH /payment-methods/{id}/default
-Authorization: Bearer {token}
-```
-
-#### Delete Payment Method
-
-```http
-DELETE /payment-methods/{id}
-Authorization: Bearer {token}
-```
-
----
-
-### Order Endpoints
-
-#### Create Order
-
-```http
-POST /orders
-Authorization: Bearer {token}
-Content-Type: application/json
-
-{
-  "restaurantId": "restaurant_id",
-  "items": [
-    { "foodItemId": "food_id1", "quantity": 2 },
-    { "foodItemId": "food_id2", "quantity": 1 }
-  ],
-  "addressId": "address_id",
+  "restaurantId": "...",
+  "items": [{ "foodItemId": "...", "quantity": 2 }],
+  "addressId": "...",
   "paymentMethodId": "card_id or 'cash'",
-  "customerNotes": "Please ring doorbell twice"
+  "customerNotes": "Ring doorbell twice"
 }
 ```
 
-#### Get My Orders
+---
 
-```http
-GET /orders
-Authorization: Bearer {token}
+### Vendor Orders — `/api/vendor/orders`
+
+| Method | Endpoint      | Auth   | Description                                  |
+| ------ | ------------- | ------ | -------------------------------------------- |
+| GET    | `/`           | Vendor | List restaurant's orders (`?status=pending`) |
+| GET    | `/stats`      | Vendor | Order statistics                             |
+| GET    | `/:id`        | Vendor | Get single order                             |
+| PATCH  | `/:id/status` | Vendor | Update order status                          |
+
+**Valid status transitions:**
+
+```
+pending → confirmed | cancelled
+confirmed → preparing | cancelled
+preparing → out_for_delivery
+out_for_delivery → delivered
 ```
 
-#### Get Order by ID
+Updating status triggers: push notification + in-app notification to customer.
 
-```http
-GET /orders/{id}
-Authorization: Bearer {token}
-```
+---
 
-#### Get Order by Number
+### Addresses — `/api/addresses`
 
-```http
-GET /orders/number/{orderNumber}
-Authorization: Bearer {token}
-```
+| Method | Endpoint       | Auth | Description         |
+| ------ | -------------- | ---- | ------------------- |
+| GET    | `/`            | ✅   | List addresses      |
+| GET    | `/default`     | ✅   | Get default address |
+| POST   | `/`            | ✅   | Create address      |
+| PATCH  | `/:id`         | ✅   | Update address      |
+| PATCH  | `/:id/default` | ✅   | Set as default      |
+| DELETE | `/:id`         | ✅   | Delete address      |
 
-#### Cancel Order (Pending Only)
+---
 
-```http
-PATCH /orders/{id}/cancel
-Authorization: Bearer {token}
+### Payment Methods — `/api/payment-methods`
+
+| Method | Endpoint       | Auth | Description                       |
+| ------ | -------------- | ---- | --------------------------------- |
+| GET    | `/`            | ✅   | List methods (cash + saved cards) |
+| POST   | `/card`        | ✅   | Add card via Paystack reference   |
+| PATCH  | `/:id/default` | ✅   | Set default                       |
+| DELETE | `/:id`         | ✅   | Remove method                     |
+
+---
+
+### Notifications — `/api/notifications`
+
+| Method | Endpoint         | Auth | Description                                     |
+| ------ | ---------------- | ---- | ----------------------------------------------- |
+| GET    | `/`              | ✅   | Get notifications (`?unreadOnly=true&limit=50`) |
+| GET    | `/unread-count`  | ✅   | Unread badge count                              |
+| PATCH  | `/:id/read`      | ✅   | Mark one as read                                |
+| PATCH  | `/mark-all-read` | ✅   | Mark all as read                                |
+| DELETE | `/:id`           | ✅   | Delete notification                             |
+
+---
+
+### Device Tokens — `/api/device-tokens`
+
+| Method | Endpoint      | Auth | Description              |
+| ------ | ------------- | ---- | ------------------------ |
+| POST   | `/register`   | ✅   | Register Expo push token |
+| DELETE | `/unregister` | ✅   | Remove push token        |
+
+```json
+// POST /device-tokens/register
+{ "token": "ExponentPushToken[xxxxxx]" }
 ```
 
 ---
 
-## Authentication
+### Search — `/api/search`
 
-All protected endpoints require a JWT token in the `Authorization` header:
-
-```
-Authorization: Bearer {token}
+```http
+GET /api/search?q=jollof
 ```
 
-### Roles
-
-- **Customer**: Can browse, order, manage profile
-- **Vendor**: Can manage restaurant and menu
-- **Admin**: Can manage categories, create admins
+Returns matched food items and restaurants.
 
 ---
 
-## Database Schema
+### Favorites — `/api/favorites`
 
-### User
-
-- Basic info (name, email, password)
-- Role (customer, vendor, admin)
-- Profile image
-- Google OAuth support
-
-### Restaurant
-
-- Owner (vendor)
-- Business details
-- Multiple images
-- Operating hours
-- Auto-computed open/closed status
-- Tags (derived from menu)
-
-### Food Item
-
-- Restaurant reference
-- Multi-category support (1-3 categories)
-- Multiple images
-- Pricing
-- Ratings
-
-### Order
-
-- Customer & restaurant references
-- Item snapshots (prevent price changes)
-- Delivery address
-- Payment method & status
-- Order status tracking
-- Unique order number
-
-### Address
-
-- User reference
-- Full address with coordinates
-- Default flag
-
-### Payment Method
-
-- User reference
-- Type (cash/card)
-- Encrypted Paystack authorization code
-- Card metadata (last4, brand, etc.)
-
-### Favorite
-
-- User & food item reference
-- Timestamp
+| Method | Endpoint             | Auth | Description           |
+| ------ | -------------------- | ---- | --------------------- |
+| GET    | `/`                  | ✅   | Get all favorites     |
+| POST   | `/:foodItemId`       | ✅   | Add to favorites      |
+| DELETE | `/:foodItemId`       | ✅   | Remove from favorites |
+| GET    | `/:foodItemId/check` | ✅   | Check if favorited    |
 
 ---
 
-## ⚡ Performance Optimizations
+### Analytics
 
-- **Redis caching** for:
-  - Categories (24h TTL)
-  - Restaurant details (1h TTL)
-  - Food items (30min TTL)
-  - Search results (10min TTL)
-  - Favorites (30min TTL)
-
-- **MongoDB indexes** on:
-  - User email & role
-  - Restaurant owner & tags
-  - Food item categories
-  - Order customer, restaurant, status
-  - Compound indexes for common queries
-
-- **Image optimization** via Cloudinary:
-  - Auto format (WebP when supported)
-  - Auto quality
-  - Max dimensions (1200x1200)
+| Method | Endpoint                | Auth   | Description                   |
+| ------ | ----------------------- | ------ | ----------------------------- |
+| GET    | `/api/vendor/analytics` | Vendor | Revenue, orders, top items    |
+| GET    | `/api/admin/analytics`  | Admin  | Platform-wide stats           |
+| GET    | `/api/admin/search`     | Admin  | Dashboard cross-entity search |
 
 ---
 
-## Security Features
+### Admin
 
-- Helmet.js for HTTP headers
-- CORS enabled
-- Rate limiting on auth endpoints
-- Password hashing with bcrypt (12 rounds)
-- JWT with expiration
-- Input validation with Zod
-- Server-side price validation
-- Paystack tokenization (no raw card storage)
-- Authorization code encryption
+| Method | Endpoint                       | Auth  | Description         |
+| ------ | ------------------------------ | ----- | ------------------- |
+| GET    | `/api/admin/users`             | Admin | List all users      |
+| PATCH  | `/api/admin/users/:id`         | Admin | Update user         |
+| GET    | `/api/admin/orders`            | Admin | All orders          |
+| GET    | `/api/admin/orders/:id`        | Admin | Get order           |
+| PATCH  | `/api/admin/orders/:id/status` | Admin | Update order status |
+
+---
+
+## Error Responses
+
+All errors follow this shape:
+
+```json
+{
+  "success": false,
+  "message": "Error description"
+}
+```
+
+| Status | Type                   |
+| ------ | ---------------------- |
+| 400    | Validation error       |
+| 401    | Unauthorized           |
+| 403    | Forbidden (wrong role) |
+| 404    | Not found              |
+| 409    | Conflict (duplicate)   |
+| 500    | Server error           |
 
 ---
 
 ## Testing
 
-### Paystack Test Cards
+**Paystack test cards:**
 
 ```
-Success: 4084084084084081
-Insufficient Funds: 5061020000000000094
+Success:            4084 0840 8408 4081
+Insufficient funds: 5061 0200 0000 0000 094
 ```
 
-### Admin Credentials (After Seeding)
+**Seeded admin:**
 
 ```
-Email: admin@foodapp.com
+Email:    admin@foodapp.com
 Password: Admin123!@#
 ```
 
 ---
 
-## Project Structure
+## Scripts
 
+```bash
+npm run dev              # Start dev server with hot reload
+npm run build            # Compile TypeScript
+npm start                # Run compiled output
+npm run seed:admin       # Create default admin account
 ```
-food-api/
-├── src/
-│   ├── config/          # Environment, database, Redis, Passport
-│   ├── controllers/     # Request handlers
-│   ├── middleware/      # Auth, error handling, uploads, rate limiting
-│   ├── models/          # MongoDB schemas
-│   ├── routes/          # API routes
-│   ├── services/        # Business logic
-│   ├── types/           # TypeScript types & Zod schemas
-│   ├── utils/           # Helper functions
-│   ├── scripts/         # Seed scripts
-│   ├── app.ts           # Express app setup
-│   └── server.ts        # Server entry point
-├── .env.example
-├── package.json
-├── tsconfig.json
-└── README.md
-```
-
----
-
-## Known Limitations (V1)
-
-- No real-time order tracking (WebSockets)
-- No delivery driver management
-- No vendor order management UI (coming in V2)
-- No push notifications
-- OTP emails via console.log (needs SMTP setup)
-- No Paystack refund implementation (marked for V2)
-- Single restaurant per vendor
-
----
-
-## Roadmap (V2)
-
-- [ ] Vendor dashboard with order management
-- [ ] Delivery driver role & assignment
-- [ ] Real-time order tracking (Socket.io)
-- [ ] Push notifications (FCM)
-- [ ] Email service integration
-- [ ] Review & rating system
-- [ ] Paystack refund automation
-- [ ] Multi-restaurant support per vendor
-- [ ] Analytics & reporting
-- [ ] Promo codes & discounts
-
----
-
-## Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
-
----
-
-## License
-
-This project is licensed under the MIT License.
-
----
-
-## Author
-
-Built with ❤️ for Nigerian food delivery
-
----
-
-## Acknowledgments
-
-- Paystack for payment processing
-- Cloudinary for image management
-- Upstash for Redis hosting
-- MongoDB Atlas for database hosting
-
----
-
-## Support
-
-For issues or questions, please open an issue on GitHub.
