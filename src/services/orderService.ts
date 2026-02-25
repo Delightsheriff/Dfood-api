@@ -161,13 +161,20 @@ export class OrderService {
   }
 
   /**
-   * Get order by ID
+   * Get order by ID or order number
    */
   async getById(orderId: string, userId: string): Promise<IOrder> {
-    const order = await Order.findById(orderId).populate(
-      "restaurantId",
-      "name images address phone",
-    );
+    // Auto-detect: if it's a valid ObjectId use findById, otherwise query by orderNumber
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+    const order = isObjectId
+      ? await Order.findById(orderId).populate(
+          "restaurantId",
+          "name images address phone",
+        )
+      : await Order.findOne({ orderNumber: orderId }).populate(
+          "restaurantId",
+          "name images address phone",
+        );
 
     if (!order) {
       throw new NotFoundError("Order not found");
