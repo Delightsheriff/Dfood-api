@@ -13,6 +13,7 @@ import {
 } from "../types/errors";
 import { checkIsOpen } from "../utils/timeUtils";
 import crypto from "crypto";
+import { notificationService } from "./notificationService";
 
 export class OrderService {
   /**
@@ -144,6 +145,13 @@ export class OrderService {
       customerNotes: data.customerNotes,
     });
 
+    // CREATE NOTIFICATION FOR VENDOR
+    await notificationService.notifyVendorNewOrder(
+      restaurant.ownerId.toString(),
+      order.orderNumber,
+      order._id.toString(),
+    );
+
     // Populate restaurant for response - DON'T use toJSON which triggers virtuals
     const populatedOrder = await Order.findById(order._id)
       .populate("restaurantId", "name images address phone")
@@ -153,13 +161,20 @@ export class OrderService {
   }
 
   /**
-   * Get order by ID
+   * Get order by ID or order number
    */
   async getById(orderId: string, userId: string): Promise<IOrder> {
-    const order = await Order.findById(orderId).populate(
-      "restaurantId",
-      "name images address phone",
-    );
+    // Auto-detect: if it's a valid ObjectId use findById, otherwise query by orderNumber
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+    const order = isObjectId
+      ? await Order.findById(orderId).populate(
+          "restaurantId",
+          "name images address phone",
+        )
+      : await Order.findOne({ orderNumber: orderId }).populate(
+          "restaurantId",
+          "name images address phone",
+        );
 
     if (!order) {
       throw new NotFoundError("Order not found");
@@ -217,6 +232,16 @@ export class OrderService {
 
     order.status = "cancelled";
     await order.save();
+
+    // NOTIFY VENDOR ABOUT CANCELLATION
+    const restaurant = await Restaurant.findById(order.restaurantId);
+    if (restaurant) {
+      await notificationService.notifyVendorOrderCancelled(
+        restaurant.ownerId.toString(),
+        order.orderNumber,
+        order._id.toString(),
+      );
+    }
 
     return order;
   }

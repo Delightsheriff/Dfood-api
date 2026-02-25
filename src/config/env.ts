@@ -39,6 +39,13 @@ const envSchema = z.object({
   SMTP_PORT: z.string().transform(Number).optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
+
+  // Resend Email
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("DFood <noreply@dfood.com>"),
+
+  // Firebase
+  FIREBASE_SERVICE_ACCOUNT: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

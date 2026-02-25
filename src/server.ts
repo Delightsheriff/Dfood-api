@@ -2,6 +2,7 @@ import app from "./app";
 import { connectDB } from "./config/database";
 import { redisClient } from "./config/redis";
 import { env } from "./config/env";
+import { initializeFirebase } from "./config/firebase";
 
 const startServer = async () => {
   try {
@@ -10,6 +11,9 @@ const startServer = async () => {
 
     // Connect to Redis (non-blocking)
     await redisClient.connect();
+
+    // Initialize Firebase
+    initializeFirebase();
 
     app.listen(env.PORT, () => {
       console.log(`Server running on port ${env.PORT}`);

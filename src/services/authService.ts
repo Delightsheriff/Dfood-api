@@ -17,6 +17,7 @@ import {
   UserRole,
   SanitizedUser,
 } from "../types/auth";
+import { emailService } from "./emailService";
 
 export class AuthService {
   private generateToken(
@@ -62,6 +63,9 @@ export class AuthService {
     });
 
     const token = this.generateToken(user._id.toString());
+
+    // Send welcome email (non-blocking)
+    emailService.sendWelcomeEmail(user.name, user.email).catch(() => {});
 
     return { user: this.sanitizeUser(user), token };
   }
@@ -135,7 +139,11 @@ export class AuthService {
     user.resetOTPExpire = new Date(Date.now() + 15 * 60 * 1000);
     await user.save();
 
-    console.log(`[DEV] OTP for ${data.email}: ${otp}`);
+    // Send OTP via email; keep console log for dev convenience
+    if (env.NODE_ENV === "development") {
+      console.log(`[DEV] OTP for ${data.email}: ${otp}`);
+    }
+    emailService.sendOTPEmail(data.email, otp).catch(() => {});
   }
 
   async verifyOTP(data: VerifyOTPInput): Promise<{ resetToken: string }> {
@@ -171,6 +179,11 @@ export class AuthService {
     user.resetOTP = undefined;
     user.resetOTPExpire = undefined;
     await user.save();
+
+    // Send password reset confirmation email (non-blocking)
+    emailService
+      .sendPasswordResetConfirmation(user.email, user.name)
+      .catch(() => {});
   }
 
   async validateToken(token: string): Promise<IUser> {

@@ -13,6 +13,11 @@ export interface IUser extends Document {
   phone?: string;
   resetOTP?: string;
   resetOTPExpire?: Date;
+  deviceTokens: Array<{
+    token: string;
+    platform: "ios" | "android";
+    addedAt: Date;
+  }>;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -63,6 +68,23 @@ const userSchema = new Schema<IUser>(
       type: Date,
       select: false,
     },
+    deviceTokens: [
+      {
+        token: {
+          type: String,
+          required: true,
+        },
+        platform: {
+          type: String,
+          enum: ["ios", "android"],
+          required: true,
+        },
+        addedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

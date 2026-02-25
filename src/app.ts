@@ -11,6 +11,15 @@ import favoriteRoutes from "./routes/favoriteRoutes";
 import addressRoutes from "./routes/addressRoutes";
 import paymentMethodRoutes from "./routes/paymentMethodRoutes";
 import orderRoutes from "./routes/orderRoutes";
+import vendorAuthRoutes from "./routes/vendorAuthRoutes";
+import adminUserRoutes from "./routes/adminUserRoutes";
+import dashboardSearchRoutes from "./routes/dashboardSearchRoutes";
+import adminOrderRoutes from "./routes/adminOrderRoutes";
+import vendorOrderRoutes from "./routes/vendorOrderRoutes";
+import vendorAnalyticsRoutes from "./routes/vendorAnalyticsRoutes";
+import adminAnalyticsRoutes from "./routes/adminAnalyticsRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
+import deviceTokenRoutes from "./routes/deviceTokenRoutes";
 
 import { errorHandler } from "./middleware/errorHandler";
 import passport from "./config/passport";
@@ -30,6 +39,7 @@ app.get("/health", (_req: Request, res: Response) => {
 
 // Routes
 app.use("/api/auth", authRoutes);
+app.use("/api/auth/vendor", vendorAuthRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/restaurants", restaurantRoutes);
 app.use("/api/food-items", foodItemRoutes);
@@ -39,6 +49,15 @@ app.use("/api/favorites", favoriteRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/payment-methods", paymentMethodRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/dashboard/search", dashboardSearchRoutes);
+app.use("/api/vendor/orders", vendorOrderRoutes);
+app.use("/api/admin/orders", adminOrderRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/vendor/analytics", vendorAnalyticsRoutes);
+app.use("/api/admin/analytics", adminAnalyticsRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/device-tokens", deviceTokenRoutes);
 
 // 404
 app.use((_req: Request, res: Response) => {

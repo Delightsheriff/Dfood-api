@@ -38,16 +38,15 @@ export class RestaurantService {
       }
     }
 
-    // Require at least one image
-    if (imageBuffers.length === 0) {
-      throw new ValidationError("At least one restaurant image is required");
+    let imageUrls: string[] = [];
+    if (imageBuffers.length > 0) {
+      imageUrls = await cloudinaryService.uploadImages(
+        imageBuffers,
+        "restaurants",
+      );
     }
 
     // Upload images
-    const imageUrls = await cloudinaryService.uploadImages(
-      imageBuffers,
-      "restaurants",
-    );
 
     // Create restaurant
     const restaurant = await Restaurant.create({
@@ -55,12 +54,6 @@ export class RestaurantService {
       ownerId: userId,
       images: imageUrls,
     });
-
-    // Auto-upgrade user to vendor if they're currently a customer
-    if (user.role === UserRole.CUSTOMER) {
-      user.role = UserRole.VENDOR;
-      await user.save();
-    }
 
     // Invalidate cache
     await cacheService.deletePattern("restaurants:*");
