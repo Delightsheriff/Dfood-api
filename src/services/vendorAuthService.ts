@@ -5,6 +5,7 @@ import { ConflictError } from "../types/errors";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 import { notificationService } from "./notificationService";
+import { emailService } from "./emailService";
 
 interface VendorSignupInput {
   firstName: string;
@@ -53,12 +54,16 @@ export class VendorAuthService {
     });
 
     // NOTIFY ADMINS ABOUT NEW VENDOR
-
     await notificationService.notifyAdminsNewVendor(
       user.name,
       user._id.toString(),
       restaurant.name,
     );
+
+    // Send vendor welcome email (non-blocking)
+    emailService
+      .sendVendorWelcomeEmail(user.name, user.email, restaurant.name)
+      .catch(() => {});
 
     // Generate token
     const token = jwt.sign({ id: user._id, role: user.role }, env.JWT_SECRET!, {

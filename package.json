@@ -42,6 +42,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "paystack-api": "^2.0.6",
+    "resend": "^6.9.2",
     "streamifier": "^0.1.1",
     "typescript": "^5.9.3",
     "zod": "^4.3.6",
